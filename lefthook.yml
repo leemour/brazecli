@@ -14,6 +14,17 @@ pre-commit:
       # people end up reaching for --no-verify, which is worse than no hook.
       run: pnpm exec biome check --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
 
+    gitleaks:
+      # Staged content only, and it warns rather than blocks when gitleaks is not installed: a
+      # fresh clone must still be able to commit. CI is the gate that cannot be skipped.
+      run: |
+        if command -v gitleaks >/dev/null 2>&1; then
+          gitleaks git --staged --no-banner --redact .
+        else
+          echo "gitleaks is not installed — staged changes were NOT scanned for secrets."
+          echo "  install: https://github.com/gitleaks/gitleaks#installing  (CI scans regardless)"
+        fi
+
 pre-push:
   parallel: true
   commands:

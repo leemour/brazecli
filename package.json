@@ -24,7 +24,8 @@
     "docs:generate": "node scripts/generate-commands-doc.mjs",
     "docs:check": "node scripts/generate-commands-doc.mjs --check",
     "smoke:bun": "bun run scripts/smoke-core.ts",
-    "prepare": "lefthook install || true"
+    "prepare": "lefthook install || true",
+    "secrets:scan": "gitleaks git --no-banner --redact ."
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",

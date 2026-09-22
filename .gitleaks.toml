@@ -1,0 +1,28 @@
+# Secret scanning. The default rules catch the well-known shapes; the rule below catches the one
+# this repository handles.
+#
+#   gitleaks git --redact .              the whole history
+#   gitleaks git --staged --redact .     what is about to be committed — the pre-commit hook
+#
+# `--redact` matters twice over here: Braze returns the API key inside the body of a 401 (`SEC-1`),
+# so an unredacted finding would print a production key into a CI log.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "braze-api-key"
+description = "Braze REST API key"
+# Braze keys are UUIDs, which on their own are indistinguishable from any other UUID — so this
+# matches only next to a name that says what it is.
+regex = '''(?i)(?:braze[_-]?(?:api[_-]?)?key|BRAZE_API_KEY|api[_-]?key)["'\s:=]{1,10}([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})'''
+tags = ["braze", "key"]
+
+[allowlist]
+description = "Values the tests and docs write on purpose"
+regexTarget = "match"
+regexes = [
+  '''00000000-0000-0000-0000-0000000000\d\d''',
+  '''(?i)test-key|fake-key|your-api-key|<api-key>''',
+]
+paths = ['''pnpm-lock\.yaml''', '''spec/braze\.postman\.json''']
