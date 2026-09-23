@@ -38,7 +38,7 @@ What was ruled and why: [`DECISIONS.md`](DECISIONS.md).
 Published: [`@leemour/brazecli`](https://www.npmjs.com/package/@leemour/brazecli) `0.1.1`, 567
 tests. Phases 1–3 are closed — see [`BACKLOG_DONE.md`](BACKLOG_DONE.md).
 
-**Waiting to be released as `0.1.2`** (`NEED-57`): `SEC-2`, `CORE-11`, `BULK-10`, `DOC-3`.
+**Waiting to be released as `0.2.0`** (`NEED-57`): `SEC-2`, `CORE-11`, `BULK-10`, `DOC-3`.
 
 Nothing is blocked on the owner.
 

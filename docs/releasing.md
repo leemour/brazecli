@@ -25,60 +25,40 @@ file](https://pnpm.io/npmrc) and deliberately not in a project's `.npmrc`.
 
 ## The release
 
-**1. Bump the version.** One place is authoritative:
+**1. Bump the version and write the changelog.** One place is authoritative:
 
 ```sh
 # edit "version" in packages/cli/package.json
 pnpm version:sync            # copies it into core, version.ts and the skill's frontmatter
 ```
 
-**2. Write the changelog entry** in [`../CHANGELOG.md`](../CHANGELOG.md) — what changed, for
-somebody who will not read the commits.
+Then add a `## <version> — <date>` section to [`../CHANGELOG.md`](../CHANGELOG.md), written for
+somebody who will not read the commits. **The first bullet's bold lead-in becomes the release
+title**, so write it as a whole clause — `- **Text from Braze can no longer rewrite your
+terminal.** …`.
 
-**3. Run everything.** All nine, in this order; `build` must come before `test`, because the tests
-run the built binary:
+A new command or flag is a **minor** bump even at `0.x`; only fixes are a patch.
 
-```sh
-pnpm install && pnpm lint && pnpm typecheck && pnpm build && pnpm test
-pnpm portability:core && pnpm smoke:bun && pnpm catalog:check && pnpm docs:check && pnpm version:check
-```
+**2. Open a pull request and let CI agree with you**, then merge it. Release from `main`.
 
-**4. Open a pull request and let CI agree with you**, then merge it. Release from `main`.
-
-**5. Check what will ship, then publish:**
+**3. Run one script:**
 
 ```sh
-pnpm --filter @leemour/brazecli publish --dry-run --no-git-checks    # the file list
-NPM_TOKEN="$(secret-tool lookup service npm account leemour)" \
-  pnpm --filter @leemour/brazecli publish --access public
+./scripts/release.sh --dry-run    # everything except the publish, the tag and the release
+./scripts/release.sh
 ```
 
-`pnpm publish` runs `prepack`, which rebuilds — so what ships is built from the tree being
-published, never from whatever was left in `dist`.
+It refuses unless you are on `main`, the tree is clean, `main` matches `origin/main`, the version
+is not already on npm and the changelog has a section for it. Then it runs all nine gates,
+publishes, **proves the result from the registry in an empty directory**, and only then tags the
+commit and writes the GitHub release — so the tag records what shipped rather than what was meant
+to.
 
-**6. Prove it from the registry**, from a directory with no `node_modules`:
+The npm token is read from the keyring into the environment of the publish command alone. It is
+never printed, never written to a file, and never part of a URL an error could echo back.
 
-```sh
-npm view @leemour/brazecli version
-npx --yes @leemour/brazecli --version
-npx --yes @leemour/brazecli commands --json | head -c 200
-```
-
-**7. Tag what you published, and write the release.** Set the two values once, so nothing has to
-be retyped consistently into four places:
-
-```sh
-V=$(node -p 'require("./packages/cli/package.json").version')
-SUMMARY="profile commands print a table again"
-
-git tag -a "v$V" -m "v$V — $SUMMARY"
-git push origin "v$V"
-gh release create "v$V" --title "v$V — $SUMMARY" \
-  --notes-file <(awk "/^## $V /{f=1;next} /^## /{f=0} f" CHANGELOG.md)
-```
-
-The tag goes on the commit that was published, on `main`, after the publish succeeded — so it
-records a fact rather than an intention.
+`RELEASE_SUMMARY="…"` overrides the derived title if the changelog's first lead-in is not the
+right one.
 
 ## Things that bite
 
