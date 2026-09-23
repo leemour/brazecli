@@ -76,9 +76,8 @@ a TTY is, or which profile is selected.
 The bundle checks **every published entry of core**, `.` and `./testing`. The test kit is the file
 most likely to reach for a timer or a Node builtin, and it ships to consumers like the rest.
 
-All three were verified on 2026-09-13 by putting a canary
-(`export const home = () => process.env.HOME`) into `packages/core/src` and confirming each one
-goes red. Run them with `pnpm lint`, `pnpm typecheck`, `pnpm portability:core`.
+Run them with `pnpm lint`, `pnpm typecheck`, `pnpm portability:core`. All three are proven against
+a canary — `export const home = () => process.env.HOME` in `packages/core/src` turns each one red.
 
 **Biome and `types: []` are the authority on globals; the bundle is the authority on imports.**
 The bundle also scans for Node globals, but only in usage shapes (`process.`, `typeof process`,
@@ -139,14 +138,11 @@ official Braze collection → (explicit dev-time sync) → spec/braze.postman.js
 The committed snapshot is what ships. A change in Braze's API therefore arrives as a reviewable Git
 diff rather than as a silent change in the installed CLI's behaviour.
 
-**The source is settled (2026-09-14, `NEED-13`).** The collection comes from Braze's own Postman
-documenter, `https://documenter.getpostman.com/api/collections/4689407/SVYrsdsG`, which answers
-`200` with the whole collection as JSON and needs no Postman account or token. 99 requests, every
-one carrying a distinct Postman id, and three consecutive downloads are byte-identical. So
-`spec:sync` downloads rather than validating a hand-made export.
-
-This corrects `RISK-1`, which recorded the source as unconfirmed after three guessed URLs 404'd on
-2026-09-13 — none of them this one. Details in [`DECISIONS.md`](DECISIONS.md).
+**The source** is Braze's own Postman documenter,
+`https://documenter.getpostman.com/api/collections/4689407/SVYrsdsG`, which answers `200` with the
+whole collection as JSON and needs no Postman account or token. 99 requests, every one carrying a
+distinct Postman id, and three consecutive downloads are byte-identical — so `spec:sync` downloads
+rather than validating a hand-made export (`NEED-13`).
 
 ⚠ That address is Postman's internal API rather than a published interface, so it may change
 without notice (`RISK-2`). Nothing at runtime depends on it: the committed snapshot is what ships,

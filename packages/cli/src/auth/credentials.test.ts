@@ -1,6 +1,7 @@
 import { mkdtempSync, readFileSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { BrazeError } from "brazecli-core"
 import { describe, expect, it, vi } from "vitest"
 import { Credentials, keyringService } from "./credentials.js"
 import { brokenKeyring, memoryKeyring } from "./keyring.js"
@@ -59,6 +60,18 @@ describe("when the keyring cannot be used", () => {
     const store = new Credentials({ configDir: tempDir(), storage: "keyring", keyring: brokenKeyring(), env: {} })
 
     expect(() => store.write("production", "k1")).toThrow(/no secret service/)
+  })
+
+  it("calls a pinned keyring that cannot work a configuration error, not an unknown crash", () => {
+    const store = new Credentials({ configDir: tempDir(), storage: "keyring", keyring: brokenKeyring(), env: {} })
+
+    try {
+      store.write("production", "k1")
+      expect.unreachable("the write should have thrown")
+    } catch (error) {
+      expect(error).toBeInstanceOf(BrazeError)
+      expect((error as BrazeError).code).toBe("configuration_error")
+    }
   })
 
   it("skips the keyring entirely when storage is pinned to file", () => {

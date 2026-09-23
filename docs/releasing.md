@@ -1,8 +1,7 @@
 # Releasing
 
 Releases are published **from a maintainer's machine**, not from CI (`NEED-49`). The tag and the
-GitHub release are made afterwards, so they record what actually reached npm rather than what was
-meant to.
+GitHub release come afterwards, so they record what actually reached npm.
 
 The package is `@leemour/brazecli`. There is only one; `packages/core` is private and is bundled
 into the command at build time.
@@ -65,15 +64,21 @@ npx --yes @leemour/brazecli --version
 npx --yes @leemour/brazecli commands --json | head -c 200
 ```
 
-**7. Tag what you published, and write the release:**
+**7. Tag what you published, and write the release.** Set the two values once, so nothing has to
+be retyped consistently into four places:
 
 ```sh
-git tag -a v0.1.0 -m "v0.1.0 — <one line>"
-git push origin v0.1.0
-gh release create v0.1.0 --title "v0.1.0 — <one line>" --notes-file <(sed -n '/^## 0.1.0/,/^## /p' CHANGELOG.md)
+V=$(node -p 'require("./packages/cli/package.json").version')
+SUMMARY="profile commands print a table again"
+
+git tag -a "v$V" -m "v$V — $SUMMARY"
+git push origin "v$V"
+gh release create "v$V" --title "v$V — $SUMMARY" \
+  --notes-file <(awk "/^## $V /{f=1;next} /^## /{f=0} f" CHANGELOG.md)
 ```
 
-The tag goes on the commit that was published, on `main`, after the publish succeeded.
+The tag goes on the commit that was published, on `main`, after the publish succeeded — so it
+records a fact rather than an intention.
 
 ## Things that bite
 
@@ -89,8 +94,5 @@ The tag goes on the commit that was published, on `main`, after the publish succ
 
 ## Why not from CI
 
-A release job existed and was removed: on this repository it would need a long-lived npm token in
-the repository secrets, to save one command a maintainer runs a few times a year. If that changes —
-several maintainers, or releases often enough that consistency matters more than the token — the
-work is `OPS-6` in [`BACKLOG.md`](BACKLOG.md), and npm's trusted publishing over OIDC should be
-checked first, since it needs no stored token at all.
+`NEED-49` in [`DECISIONS.md`](DECISIONS.md). If it ever changes — several maintainers, or releases
+often enough that consistency beats the token — the work is `OPS-6` in [`BACKLOG.md`](BACKLOG.md).

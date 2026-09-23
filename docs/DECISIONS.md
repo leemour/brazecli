@@ -17,8 +17,9 @@ decision.
 ## 2026-09-13
 
 **NEED-0 · Is the repository public?**
-**Public.** Not a pending question — measured, not decided: `gh repo view leemour/braze-cli`
-reports `"visibility": "PUBLIC"`, created 2026-09-13. This settles remaining question #1 in
+**Public.** Measured, not decided: `gh repo view` reports `"visibility": "PUBLIC"`. (The
+repository was `leemour/braze-cli` when this was measured and is now
+[`leemour/brazecli`](https://github.com/leemour/brazecli).) This settles remaining question #1 in
 [`REQUIREMENTS.md`](REQUIREMENTS.md) and has two consequences that are already acted on: committed
 documents are written in English, and CI runs on every pull request because Actions minutes are
 free on a public repository.
@@ -31,34 +32,23 @@ Consequence for `CLI-5`: mode selection is one function, so the whole default ca
 one line if agent traffic ever makes that the better default.
 
 **NEED-2 · Publish to npm, and under what name?**
-**Publish as ~~`brazecli`~~ `@leemour/brazecli`** — **correction 2026-09-17: npm refused the
-unscoped name** on the first upload, in the words this ruling predicted: «Package name too similar
-to existing package braze-cli; try renaming your package to '@leemour/brazecli'» (`NEED-48`). The
-command is `braze` either way, so only the install line changed. ~~At v1, not before~~ — **correction 2026-09-17: the first published
-version is `0.1.0`** (`NEED-43`). Nobody had installed this on a machine other than the one that
-built it, and `0.x` promises nothing while the first macOS reports come back. The name ruling below
-stands unchanged; the GitHub repository was renamed to
-[`leemour/brazecli`](https://github.com/leemour/brazecli) on 2026-09-17, so the sentence about it
-keeping `braze-cli` no longer holds either.
+**As `@leemour/brazecli`, at `0.1.0`.** Both halves of the original ruling were overturned on
+2026-09-17 and the strikethroughs are kept because both circulated:
 
-**Publish at v1, not before, as `brazecli`.** «publish later, we can pick a similar name, help me
-choose» → «let's use brazecli». Unscoped, chosen over `brazectl` and over a personal scope. The
-packages are `brazecli` and `brazecli-core`; **the typed command stays `braze`**, set by the `bin`
-field, so the package name is only ever seen in an install line. The GitHub repository was renamed to `brazecli` on
-2026-09-17 (it kept `braze-cli` when this was ruled).
+- ~~`brazecli`, unscoped~~ — npm refused it on the first upload, in the words this ruling had
+  predicted: «Package name too similar to existing package braze-cli; try renaming your package to
+  '@leemour/brazecli'» (`NEED-48`). Scoped names are exempt from that check. `braze-cli` is a live
+  unrelated package, `braze-cli@0.4.1`.
+- ~~at v1, not before~~ — the first published version is `0.1.0` (`NEED-43`). Nobody had installed
+  this on a machine other than the one that built it, and `0.x` promises nothing.
 
-⚠ **Unverified, and it only surfaces at the first publish:** npm refuses a new name that differs
-from an existing one by punctuation alone, and `brazecli` is `braze-cli` without the hyphen. A 404
-from the registry means nothing is published there, not that a publish would be accepted — the
-check runs registry-side on the `PUT`. Nothing is lost by finding out at v1: renaming a package
-that has never been published is a one-line change. `OPS-2` carries it. `braze-cli` is not a free name going spare: it is a live
-package, `braze-cli@0.4.1`, published 2026-08-03 from
-[github.com/vanducng/braze-cli](https://github.com/vanducng/braze-cli) — and almost certainly the
-"existing braze-cli" that [`REQUIREMENTS.md`](REQUIREMENTS.md) §69 says to take ideas from
-(`FIND-5`). Nothing is published until v1; `OPS-2` carries the work.
+**The typed command stays `braze`** either way, set by the `bin` field, so the package name is
+only ever seen in an install line. `brazectl` and a personal scope were the rejected alternatives.
+The GitHub repository was renamed to [`leemour/brazecli`](https://github.com/leemour/brazecli) on
+2026-09-17.
 
 **NEED-47 · One published package, or two?**
-**One: `brazecli`.** «we don't need to run brazecli on worker so don't need to split into 2
+**One: `@leemour/brazecli`.** «we don't need to run brazecli on worker so don't need to split into 2
 packages… we just need this as cli on dev machines». `brazecli-core` stays `private` and is bundled
 into the published binary at build time.
 
@@ -133,10 +123,8 @@ as JSON — 565 438 bytes, schema v2.0.0, `info.name` "Braze Endpoints" — **wi
 and no token**. 99 requests in 32 folders, covering every endpoint already confirmed live under
 `NEED-11` as well as `/users/export/ids`, the case behind `FIND-13`.
 
-So the first row of the plan's probe table wins and no fallback is needed: `spec:sync` downloads,
-it does not merely validate a manual export. `RISK-1` recorded this source as unconfirmed; it had
-tested three guessed addresses, none of them this one, and is corrected in place in
-the session journal for 2026-09-13.
+So `spec:sync` downloads rather than validating a hand-made export, and no fallback is needed.
+This corrects `RISK-1`, which had recorded the source as unconfirmed.
 
 Three properties that the rest of Phase 2 is built on, each measured:
 

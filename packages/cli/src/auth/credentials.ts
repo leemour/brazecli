@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
+import { BrazeError } from "brazecli-core"
 import type { CredentialStorage } from "../config/file.js"
 import { writeSecurely } from "../config/file.js"
 import { type KeyringStore, systemKeyring } from "./keyring.js"
@@ -123,7 +124,20 @@ export class Credentials {
   }
 
   #tryKeyring<T>(operation: () => T): T | undefined {
-    if (this.#storage === "keyring") return operation()
+    // `keyring` was asked for explicitly, so there is no fallback to warn about — but the failure
+    // is still the configuration being wrong for this machine, not an unknown crash (`CLI-12`).
+    if (this.#storage === "keyring") {
+      try {
+        return operation()
+      } catch (error) {
+        throw new BrazeError(
+          "configuration_error",
+          `credentialStorage is "keyring" and the OS keyring is unavailable (${
+            error instanceof Error ? error.message : String(error)
+          })`,
+        )
+      }
+    }
 
     try {
       return operation()

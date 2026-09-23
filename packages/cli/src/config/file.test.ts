@@ -1,6 +1,7 @@
 import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { BrazeError } from "brazecli-core"
 import { describe, expect, it } from "vitest"
 import { emptyConfig, loadConfig, saveConfig, writeSecurely } from "./file.js"
 
@@ -38,6 +39,23 @@ describe("config file", () => {
     writeFileSync(join(dir, "config.json"), "{ not json")
 
     expect(() => loadConfig(dir)).toThrow(/not valid JSON/)
+  })
+
+  // docs/agents.md publishes `3 → configuration_error` as a contract; a plain Error reaches the
+  // agent as exit 1, which is the code for "we have no idea what happened".
+  it.each([
+    ["not JSON at all", "{ not json"],
+    ["JSON that is not a config", JSON.stringify({ version: 1, profiles: { p: {} } })],
+  ])("gives a broken config file its own exit code — %s", (_name, contents) => {
+    const dir = tempDir()
+    writeFileSync(join(dir, "config.json"), contents)
+
+    expect(() => loadConfig(dir)).toThrow(BrazeError)
+    try {
+      loadConfig(dir)
+    } catch (error) {
+      expect((error as BrazeError).code).toBe("configuration_error")
+    }
   })
 })
 
