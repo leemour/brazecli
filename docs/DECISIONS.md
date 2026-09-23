@@ -348,8 +348,11 @@ sequences that overwrite our own output, and `records.csv` can carry a cell Exce
 design was already written on 2026-09-18.
 
 **NEED-57 · Does `SEC-2` justify a release on its own?**
-**No — one release for all four (option B).** «2 B». `0.1.2` carries `SEC-2`, `CORE-11`, `BULK-10`
-and `DOC-3`, published once when all four have landed, per [`releasing.md`](releasing.md).
+**No — one release for all four (option B).** «2 B». One release carries `SEC-2`, `CORE-11`,
+`BULK-10` and `DOC-3`, published once when all four have landed, per [`releasing.md`](releasing.md).
+
+**It is `0.2.0`, not `0.1.2`** — corrected 2026-09-23 on the owner's call: «with quick wins it's
+0.2.0». `braze runs cleanup` is a new command, and a new command is a minor bump even at `0.x`.
 
 **NEED-58 · Delete the journals older than a week, once harvested?**
 **Yes (option A).** «1 A». The ten files from 13–18 September go after their `NEED-nn` rulings are
