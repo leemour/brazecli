@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
+import { BrazeError } from "brazecli-core"
 import * as v from "valibot"
 
 export const CREDENTIAL_STORAGE = ["auto", "keyring", "file"] as const
@@ -73,13 +74,16 @@ export const loadConfig = (configDir: string): Config => {
   try {
     parsed = JSON.parse(text)
   } catch {
-    throw new Error(`${configPath(configDir)} is not valid JSON`)
+    throw new BrazeError("configuration_error", `${configPath(configDir)} is not valid JSON`)
   }
 
   const result = v.safeParse(ConfigSchema, parsed)
   if (!result.success) {
     const problems = result.issues.map((issue) => `${v.getDotPath(issue) ?? "(root)"}: ${issue.message}`)
-    throw new Error(`${configPath(configDir)} is not a valid config:\n  ${problems.join("\n  ")}`)
+    throw new BrazeError(
+      "configuration_error",
+      `${configPath(configDir)} is not a valid config:\n  ${problems.join("\n  ")}`,
+    )
   }
   return result.output
 }
