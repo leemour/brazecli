@@ -316,6 +316,23 @@ it started.
 
 Cheap to revisit — one line, and no data format depends on it.
 
+## Harvested from the journals, 2026-09-23
+
+**NEED-39 · Give the staging key `users.delete`, so a live check can clean up after itself?**
+**Yes (option A), and it has not been done yet.** Braze's REST API does not grant permissions to a
+key — only the dashboard does, so this is the owner's to do: Settings → API Keys → the staging key
+→ tick `users.delete`. Until then the two profiles the `RISK-3` measurement created cannot be
+removed, which is why `docs_ai/CLEANUP.md` still lists them.
+
+**NEED-46 · Put `NPM_TOKEN` in the repository secrets so a release workflow can run?**
+**Moot — `NEED-49` removed the workflow.** Releases are made from a maintainer's machine, so no
+token is stored anywhere but the owner's keyring. If that is ever revisited it is `OPS-6`, and
+npm's trusted publishing over OIDC should be checked first because it stores no token at all.
+
+**NEED-53 · Remove the two staging user profiles the `RISK-3` measurement created?**
+**No — leave them.** «just leave these users». They carry one attribute, `brazecli_test: true`.
+The `docs_ai/CLEANUP.md` line stays as deliberately kept rather than as outstanding work.
+
 ## 2026-09-23
 
 **NEED-50 · Publish `main` when its only unreleased commit changes nothing a user can see?**
