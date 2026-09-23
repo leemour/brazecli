@@ -6,6 +6,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 follow [semantic versioning](https://semver.org/spec/v2.0.0.html) — with `0.x` meaning the command
 surface may still move between minor versions.
 
+## Unreleased
+
+### Security
+
+- **Text from Braze can no longer rewrite your terminal.** A campaign name, a catalog title or an
+  error message is edited outside this tool and handed back as data, and a terminal executes what
+  it is given — a name containing `\x1b[2K\x1b[1G` cleared the line and overwrote output this tool
+  had already printed. Control characters are now shown as `\x1b` wherever a person reads them:
+  tables, field lists, diagnostics on stderr and every column of `records.csv`. They are made
+  **visible, not removed**, so you can see the value carried something strange.
+- **`records.csv` no longer hands a spreadsheet a formula.** Excel and LibreOffice execute a cell
+  beginning `=`, `+`, `-` or `@` even when the CSV quotes it, and `error_message` carries Braze's
+  own words. Free text now gets a leading apostrophe. Identifier columns deliberately do not — a
+  prefixed `external_id` no longer joins back to your input file. [`docs/security.md`](docs/security.md)
+  names that remaining risk.
+- **`--json` and `--jsonl` are byte-for-byte unchanged.** `JSON.stringify` already escapes these
+  characters, and those bytes are the contract scripts parse.
+
+### Added
+
+- `braze runs cleanup --older-than <days>`, with `--dry-run` and `--confirm`. Nothing expires on a
+  timer and there is no retention setting to set and forget; every removal is asked for. A run
+  directory whose `run.json` cannot be read is never removed.
+- [`docs/development.md`](docs/development.md) — working on brazecli itself: every gate and what it
+  catches, the generated files that are never edited by hand, and how a change gets made.
+
+### Fixed
+
+- A broken `config.json`, and `credentialStorage: "keyring"` on a machine whose keyring does not
+  work, exited `1` as `generic_failure`. Both now exit `3` as `configuration_error`, which is what
+  [`docs/agents.md`](docs/agents.md) has always published.
+- The `user-agent` header said `runtime/node` under bun. It now names the runtime it is actually
+  on, and still discloses no version of it.
+
 ## 0.1.1 — 2026-09-18
 
 Both of these surfaced the first time the package was installed from the registry rather than
