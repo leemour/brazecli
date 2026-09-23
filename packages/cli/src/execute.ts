@@ -8,6 +8,7 @@ import { processStreams, type Streams } from "./output/stream.js"
 import { startRun } from "./runs/run.js"
 import { trackRun } from "./runs/signals.js"
 import { type GlobalFlags, type ResolveOptions, resolveSettings, type Settings } from "./settings.js"
+import { userAgent } from "./user-agent.js"
 import { VERSION } from "./version.js"
 
 export interface ExecutionContext extends ResolveOptions {
@@ -167,7 +168,7 @@ const newClient = (settings: Settings, run: { logger: RunLogger }, context: Exec
     apiKey: settings.apiKey,
     logger: run.logger,
     fetch: context.fetch,
-    userAgent: `brazecli/${VERSION} runtime/node platform/${process.platform}`,
+    userAgent: userAgent(),
     ...(settings.timeoutMs === undefined ? {} : { timeoutMs: settings.timeoutMs }),
     ...(settings.retries === undefined ? {} : { retry: { retries: settings.retries } }),
   })

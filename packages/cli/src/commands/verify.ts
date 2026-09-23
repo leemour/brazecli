@@ -4,7 +4,7 @@ import { loadConfig, saveConfig } from "../config/file.js"
 import { createRenderer } from "../output/renderer.js"
 import { processStreams, type Streams } from "../output/stream.js"
 import { type GlobalFlags, type ResolveOptions, resolveSettings } from "../settings.js"
-import { VERSION } from "../version.js"
+import { userAgent } from "../user-agent.js"
 
 export interface VerifyContext extends ResolveOptions {
   streams?: Streams
@@ -44,7 +44,7 @@ export const verifyCommand = (context: VerifyContext = {}): Command =>
         endpoint: settings.restEndpoint,
         apiKey: settings.apiKey,
         fetch: context.fetch,
-        userAgent: `brazecli/${VERSION} runtime/node platform/${process.platform}`,
+        userAgent: userAgent(),
       })
 
       const result = await client.execute(operation, { query: { length: "1" } })

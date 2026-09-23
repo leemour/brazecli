@@ -35,8 +35,10 @@ What was ruled and why: [`DECISIONS.md`](DECISIONS.md).
 
 ## Status
 
-Published: [`@leemour/brazecli`](https://www.npmjs.com/package/@leemour/brazecli) `0.1.1`. 554
-tests. Unreleased on `main`: `SEC-2`. Phases 1–3 are closed — see [`BACKLOG_DONE.md`](BACKLOG_DONE.md).
+Published: [`@leemour/brazecli`](https://www.npmjs.com/package/@leemour/brazecli) `0.1.1`, 567
+tests. Phases 1–3 are closed — see [`BACKLOG_DONE.md`](BACKLOG_DONE.md).
+
+**Waiting to be released as `0.1.2`** (`NEED-57`): `SEC-2`, `CORE-11`, `BULK-10`, `DOC-3`.
 
 Nothing is blocked on the owner.
 
@@ -46,16 +48,6 @@ Nothing is blocked on the owner.
 |---|---|---|
 | `OPS-4` | `test:live` harness — read-only by default, its own profile, never in CI. Every live check so far has been a one-off shell command that nobody can re-run | P2 |
 | `CAT-10` | Build a request from every operation that documents a body — 48 body examples in the collection, 32 of them placeholder-free JSON. Not response assertions: the collection carries zero response examples (`NEED-28`) | P3 |
-
-## Quick wins
-
-Each is one file and needs no decision.
-
-| Number | Task | P |
-|---|---|---|
-| `CORE-11` | 🟡 One helper for the user agent instead of the same string in `packages/cli/src/execute.ts:170` and `commands/verify.ts:47`, with the runtime read from `process.versions` — both hardcode `runtime/node` while `pnpm smoke:bun` makes bun a supported runtime | P3 |
-| `DOC-3` | `docs/development.md` — working on brazecli itself, split out of the README once there is a second contributor | P3 |
-| `BULK-10` | `braze runs cleanup` with an explicit retention setting, opt-in and never a default (`NEED-3`) | P3 |
 
 ## Larger, when real usage asks for it
 

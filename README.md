@@ -289,8 +289,11 @@ pnpm smoke:bun            # core actually executes under a second runtime
 
 Inside the repository the Braze client is kept apart from everything Node-shaped — `packages/core`
 uses Web Platform APIs only, and three checks keep it that way. It is **not a separate install**:
-the build inlines it into the one published package. Contributions follow
-[docs/CONVENTIONS.md](docs/CONVENTIONS.md); the roadmap is [docs/BACKLOG.md](docs/BACKLOG.md).
+the build inlines it into the one published package.
+
+[docs/development.md](docs/development.md) covers the rest — every gate and what it catches, the
+generated files that must not be edited by hand, and how a change gets made. The roadmap is
+[docs/BACKLOG.md](docs/BACKLOG.md).
 
 ## License
 

@@ -31,6 +31,7 @@ when one drifts from the thing it describes.
 
 | | |
 |---|---|
+| [development.md](development.md) | working on brazecli itself: the gates, the generated files, making a change |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | the two packages, the portability gates, where the catalog comes from |
 | [CONVENTIONS.md](CONVENTIONS.md) | how code and documents are written here |
 | [TESTING.md](TESTING.md) | how to check it yourself |
