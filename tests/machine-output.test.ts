@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { beforeAll, describe, expect, it } from "vitest"
@@ -139,5 +139,52 @@ describe("help text, on the real binary", () => {
 
       expect(`${result.stdout}${result.stderr}`).toContain("https://www.braze.com/docs/api/home")
     }
+  })
+})
+
+// SEC-2, proved on the process rather than on a function: the sanitiser has to be reached by
+// every path that renders a stored value, not merely be correct in isolation.
+describe("text from outside, on the real binary", () => {
+  const HOSTILE = "campaigns\u001b[2K\u001b[1Glist"
+
+  const runWith = (command: string) => {
+    const dir = join(runsDir, "2026-09-23")
+    mkdirSync(join(dir, "hostile-run"), { recursive: true })
+    writeFileSync(
+      join(dir, "hostile-run", "run.json"),
+      JSON.stringify({
+        runId: "hostile-run",
+        command,
+        profile: "t",
+        startedAt: "2026-09-23T00:00:00.000Z",
+        status: "succeeded",
+      }),
+    )
+  }
+
+  it.each(["pretty", "json"])("cannot move the cursor through `runs list` in %s mode", (format) => {
+    runWith(HOSTILE)
+
+    const result = braze(["runs", "list", "--output", format], env())
+
+    expect(result.stdout).not.toMatch(ANSI)
+    expect(result.stderr).not.toMatch(ANSI)
+  })
+
+  it("shows the sequence rather than dropping it, so the reader knows it was there", () => {
+    runWith(HOSTILE)
+
+    const result = braze(["runs", "list", "--output", "pretty"], env())
+
+    expect(result.stdout).toContain("\\x1b[2K")
+  })
+
+  it("keeps the JSON value parseable and byte-identical to what was stored", () => {
+    runWith(HOSTILE)
+
+    const result = braze(["runs", "list", "--json"], env())
+    const runs = JSON.parse(result.stdout) as { command: string }[]
+
+    expect(runs.some((run) => run.command === HOSTILE)).toBe(true)
   })
 })
