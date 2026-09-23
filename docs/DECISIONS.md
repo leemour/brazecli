@@ -315,3 +315,44 @@ credential, an unreadable input, a refused profile, a validation error that stop
 it started.
 
 Cheap to revisit — one line, and no data format depends on it.
+
+## Harvested from the journals, 2026-09-23
+
+**NEED-39 · Give the staging key `users.delete`, so a live check can clean up after itself?**
+**Yes (option A), and it has not been done yet.** Braze's REST API does not grant permissions to a
+key — only the dashboard does, so this is the owner's to do: Settings → API Keys → the staging key
+→ tick `users.delete`. Until then the two profiles the `RISK-3` measurement created cannot be
+removed, which is why `docs_ai/CLEANUP.md` still lists them.
+
+**NEED-46 · Put `NPM_TOKEN` in the repository secrets so a release workflow can run?**
+**Moot — `NEED-49` removed the workflow.** Releases are made from a maintainer's machine, so no
+token is stored anywhere but the owner's keyring. If that is ever revisited it is `OPS-6`, and
+npm's trusted publishing over OIDC should be checked first because it stores no token at all.
+
+**NEED-53 · Remove the two staging user profiles the `RISK-3` measurement created?**
+**No — leave them.** «just leave these users». They carry one attribute, `brazecli_test: true`.
+The `docs_ai/CLEANUP.md` line stays as deliberately kept rather than as outstanding work.
+
+## 2026-09-23
+
+**NEED-50 · Publish `main` when its only unreleased commit changes nothing a user can see?**
+**No — wait for a real change (option A).** «1 A». `main` was one commit ahead of the published
+`0.1.1`, and that commit only added secret scanning to CI and the git hooks: nothing in the
+installed command moved, so the tarball built from `main` was the one already in the registry. A
+version number that buys the user nothing still costs them an update, and npm numbers can never be
+reused.
+
+**NEED-56 · Build `SEC-2` now, or the three quick wins first?**
+**`SEC-2` first (option A).** «1 A». It is the only open item where somebody else's text controls
+what our tool prints — a campaign name edited in the Braze dashboard can carry terminal control
+sequences that overwrite our own output, and `records.csv` can carry a cell Excel executes. The
+design was already written on 2026-09-18.
+
+**NEED-57 · Does `SEC-2` justify a release on its own?**
+**No — one release for all four (option B).** «2 B». `0.1.2` carries `SEC-2`, `CORE-11`, `BULK-10`
+and `DOC-3`, published once when all four have landed, per [`releasing.md`](releasing.md).
+
+**NEED-58 · Delete the journals older than a week, once harvested?**
+**Yes (option A).** «1 A». The ten files from 13–18 September go after their `NEED-nn` rulings are
+in this file and any finding still true is a backlog line or a paragraph in
+[`ARCHITECTURE.md`](ARCHITECTURE.md). The journal's own retention is one week.
