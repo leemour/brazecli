@@ -315,3 +315,27 @@ credential, an unreadable input, a refused profile, a validation error that stop
 it started.
 
 Cheap to revisit — one line, and no data format depends on it.
+
+## 2026-09-23
+
+**NEED-50 · Publish `main` when its only unreleased commit changes nothing a user can see?**
+**No — wait for a real change (option A).** «1 A». `main` was one commit ahead of the published
+`0.1.1`, and that commit only added secret scanning to CI and the git hooks: nothing in the
+installed command moved, so the tarball built from `main` was the one already in the registry. A
+version number that buys the user nothing still costs them an update, and npm numbers can never be
+reused.
+
+**NEED-56 · Build `SEC-2` now, or the three quick wins first?**
+**`SEC-2` first (option A).** «1 A». It is the only open item where somebody else's text controls
+what our tool prints — a campaign name edited in the Braze dashboard can carry terminal control
+sequences that overwrite our own output, and `records.csv` can carry a cell Excel executes. The
+design was already written on 2026-09-18.
+
+**NEED-57 · Does `SEC-2` justify a release on its own?**
+**No — one release for all four (option B).** «2 B». `0.1.2` carries `SEC-2`, `CORE-11`, `BULK-10`
+and `DOC-3`, published once when all four have landed, per [`releasing.md`](releasing.md).
+
+**NEED-58 · Delete the journals older than a week, once harvested?**
+**Yes (option A).** «1 A». The ten files from 13–18 September go after their `NEED-nn` rulings are
+in this file and any finding still true is a backlog line or a paragraph in
+[`ARCHITECTURE.md`](ARCHITECTURE.md). The journal's own retention is one week.
