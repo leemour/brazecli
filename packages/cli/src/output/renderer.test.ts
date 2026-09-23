@@ -114,3 +114,48 @@ describe("pretty", () => {
     expect(streams.stdout.join("")).not.toMatch(ANSI)
   })
 })
+
+// SEC-2. A campaign name, a catalog title and an error message are all edited outside this
+// repository and handed back to us as data; a terminal executes what it is given.
+describe("text that came from Braze", () => {
+  const HOSTILE = "Promo\u001b[2K\u001b[1GDELETED EVERYTHING"
+
+  it("cannot clear the line from inside a table cell", () => {
+    const { streams, renderer } = render("pretty")
+
+    renderer.result([{ name: HOSTILE, id: "c1" }])
+
+    const out = streams.stdout.join("\n")
+    expect(out).not.toMatch(ANSI)
+    expect(out).toContain("\\x1b[2K")
+    // Still one row, still carrying its other column: made visible, not dropped.
+    expect(out).toContain("c1")
+  })
+
+  it("cannot clear the line from inside a field value or its label", () => {
+    const { streams, renderer } = render("pretty")
+
+    renderer.result({ [HOSTILE]: "x", name: HOSTILE })
+
+    expect(streams.stdout.join("\n")).not.toMatch(ANSI)
+  })
+
+  it.each(["pretty", "json", "jsonl"] as const)("cannot reach stderr as a %s diagnostic", (format) => {
+    const { streams, renderer } = render(format)
+
+    renderer.failure(`Invalid request: ${HOSTILE}`)
+    renderer.warn(HOSTILE)
+
+    expect(streams.stderr.join("\n")).not.toMatch(ANSI)
+  })
+
+  it("leaves the machine contract byte for byte alone", () => {
+    const { streams, renderer } = render("json")
+
+    renderer.result([{ name: HOSTILE }])
+
+    // JSON.stringify already escapes control characters; changing these bytes would change what
+    // every script parsing us reads back.
+    expect(JSON.parse(streams.stdout.join("\n"))).toEqual([{ name: HOSTILE }])
+  })
+})

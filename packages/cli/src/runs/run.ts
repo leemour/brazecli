@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync } from "node:fs"
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { writeSecurely } from "../config/file.js"
 import { createRunLogger, type RunLogger } from "../logging/logger.js"
@@ -166,6 +166,46 @@ export const findRun = (runsDir: string, id: string): { dir: string; metadata: R
   }
   return undefined
 }
+
+export interface ExpiredRun {
+  dir: string
+  metadata: RunMetadata
+  bytes: number
+}
+
+/**
+ * Runs that finished before `before`, oldest first.
+ *
+ * **A directory whose `run.json` cannot be read is never returned**, so it is never deleted. That
+ * file is written before the first request and finalized on every path, so an unreadable one means
+ * something went wrong — which is exactly the run somebody will want to look at. Deleting what we
+ * cannot identify is the opposite of what an audit is for.
+ */
+export const expiredRuns = (runsDir: string, before: Date): ExpiredRun[] =>
+  listRuns(runsDir)
+    .filter((metadata) => new Date(metadata.startedAt) < before)
+    .reverse()
+    .flatMap((metadata) => {
+      const found = findRun(runsDir, metadata.runId)
+      return found ? [{ dir: found.dir, metadata, bytes: directoryBytes(found.dir) }] : []
+    })
+
+/** Removes one run directory, and the day directory when that was its last run. */
+export const removeRun = (runsDir: string, dir: string): void => {
+  rmSync(dir, { recursive: true, force: true })
+
+  const day = join(dir, "..")
+  if (day !== runsDir && safeReaddir(day).length === 0) rmSync(day, { recursive: true, force: true })
+}
+
+const directoryBytes = (dir: string): number =>
+  safeReaddir(dir).reduce((total, entry) => {
+    try {
+      return total + statSync(join(dir, entry)).size
+    } catch {
+      return total
+    }
+  }, 0)
 
 const readRun = (dir: string): RunMetadata | undefined => {
   try {

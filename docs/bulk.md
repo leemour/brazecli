@@ -35,6 +35,12 @@ Standard input always needs the format naming it: `cat users.jsonl | braze stagi
 **CSV** — a header row, one record per line. **Every cell arrives as a string**, because a CSV cell
 has no type and guessing one would silently change what you send.
 
+⚠ **Braze still applies its own types on arrival.** An attribute sent as the string `"2026-09-15"`
+reads back as `"2026-09-15T00:00:00.000Z"` — measured against a live workspace. We do not guess a
+type, but not guessing does not mean the value survives untyped: a date-shaped column becomes a
+date in Braze whatever we send, and a number-shaped one stays a string. Send the type you want in
+JSONL where it matters.
+
 ## What comes back
 
 ```
@@ -86,10 +92,22 @@ exact line of the exact file.
 your input. It is deliberately poorer than the file it describes, because a column added there is
 customer data kept forever.
 
+⚠ **Rows are not in the order of your input file.** A record refused here is written the moment it
+is read; a record sent to Braze is written when Braze answers, and several requests are in flight
+at once — so the refused rows of a batch appear above its submitted ones. Writing in input order
+would mean holding finished rows back until the ones before them completed, and that buffer is the
+size of your file in the worst case, which is the thing the memory bound exists to prevent. Look a
+record up by `record_id` or `row_number`; do not read the file as a sequence.
+
 ```sh
 dir=$(braze runs path <run-id>)
 awk -F, '$12=="failed"' "$dir/records.csv" | head
 ```
+
+Free text in the audit — `error_message` and `note` — is marked as literal text where a spreadsheet
+would otherwise execute it, and control characters are shown as `\x1b` in every column. Identifier
+columns are left exactly as they arrived, so they still join back to your file.
+[`security.md`](security.md) has the detail.
 
 ## Interrupting a run
 

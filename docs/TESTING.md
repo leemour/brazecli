@@ -28,11 +28,11 @@ a claim, and it has to be true.
 | Layer | Location | Runner | State |
 |---|---|---|---|
 | Core unit | `packages/core/src/**/*.test.ts` | vitest | 264 tests |
-| CLI unit | `packages/cli/src/**/*.test.ts` | vitest | 213 tests |
-| Cross-cutting | `tests/**/*.test.ts` | vitest | 38 tests — the portability gate, machine output on the built binary, the catalog generator against committed fixtures, and the generated docs |
+| CLI unit | `packages/cli/src/**/*.test.ts` | vitest | 261 tests |
+| Cross-cutting | `tests/**/*.test.ts` | vitest | 42 tests — the portability gate, machine output on the built binary, the catalog generator against committed fixtures, and the generated docs |
 | Live Braze | `pnpm test:live` | vitest | *not built* (`OPS-4`) — `./scripts/check-key.sh` does the manual equivalent |
 
-515 tests as of 2026-09-23, counted from the run rather than remembered.
+567 tests as of 2026-09-23, counted from the run rather than remembered.
 
 Vitest runs **without globals** (`vitest.config.ts`). Import `describe`/`it`/`expect` from
 `"vitest"` explicitly — injected globals would need a `types` entry in `packages/core/tsconfig.json`,

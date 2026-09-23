@@ -35,8 +35,10 @@ What was ruled and why: [`DECISIONS.md`](DECISIONS.md).
 
 ## Status
 
-Published: [`@leemour/brazecli`](https://www.npmjs.com/package/@leemour/brazecli) `0.1.1`. 515
+Published: [`@leemour/brazecli`](https://www.npmjs.com/package/@leemour/brazecli) `0.1.1`, 567
 tests. Phases 1–3 are closed — see [`BACKLOG_DONE.md`](BACKLOG_DONE.md).
+
+**Waiting to be released as `0.1.2`** (`NEED-57`): `SEC-2`, `CORE-11`, `BULK-10`, `DOC-3`.
 
 Nothing is blocked on the owner.
 
@@ -44,19 +46,9 @@ Nothing is blocked on the owner.
 
 | Number | Task | P |
 |---|---|---|
-| `SEC-2` | Neutralise text from Braze and from a customer's input file where it leaves the process. Two measured holes: `packages/cli/src/output/pretty.ts:72` passes `String(value)` through, so a campaign name containing `\u001b[2K\u001b[1G` clears the terminal line and overwrites what we printed; `packages/cli/src/runs/records-file.ts` writes `error_message` and `record_id` with no formula guard, and Excel evaluates a cell starting `=`, `+`, `-` or `@` even when quoted. Machine modes are already safe — `JSON.stringify` escapes control characters — and must not move. Designed already: `docs_ai/plans/2026-09-18-sec-2-untrusted-output.md` | P1 |
-| `OPS-4` | `test:live` harness — read-only by default, its own profile, never in CI. Every live check so far has been a one-off shell command that nobody can re-run | P2 |
+| `OPS-4` | `test:live` harness — read-only by default, its own profile, never in CI. Every live check so far has been a one-off shell command that nobody can re-run. **A write check must not create anything:** the staging key cannot delete users and that cannot be changed (`NEED-60`), so two profiles from one 2026-09-15 measurement are permanent. Reuse a profile, or stay on `--dry-run` | P2 |
+| `CORE-15` | 🚩 Decide whether `braze mcp` exists at all, before building anything for it. Braze's own MCP server covers campaigns, canvases, catalogs, segments, content and analytics — **not user profiles and not bulk**, which is what this tool is for, and all of it is already reachable through the 95 generated operations. What MCP alone offers is signing in without issuing a REST key, with permissions from the person's dashboard role. Two things are unmeasured: whether Braze's client registration accepts a loopback client with no domain (`NEED-54`, one anonymous `POST /oauth/register` answers it, and it leaves a client record behind), and Braze's domain allowlist. The opposite direction — serving **our** operations to an agent as MCP tools — is `CORE-14` and needs none of this | P3 |
 | `CAT-10` | Build a request from every operation that documents a body — 48 body examples in the collection, 32 of them placeholder-free JSON. Not response assertions: the collection carries zero response examples (`NEED-28`) | P3 |
-
-## Quick wins
-
-Each is one file and needs no decision.
-
-| Number | Task | P |
-|---|---|---|
-| `CORE-11` | 🟡 One helper for the user agent instead of the same string in `packages/cli/src/execute.ts:170` and `commands/verify.ts:47`, with the runtime read from `process.versions` — both hardcode `runtime/node` while `pnpm smoke:bun` makes bun a supported runtime | P3 |
-| `DOC-3` | `docs/development.md` — working on brazecli itself, split out of the README once there is a second contributor | P3 |
-| `BULK-10` | `braze runs cleanup` with an explicit retention setting, opt-in and never a default (`NEED-3`) | P3 |
 
 ## Larger, when real usage asks for it
 

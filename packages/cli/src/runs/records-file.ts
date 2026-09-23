@@ -3,6 +3,7 @@ import { createWriteStream } from "node:fs"
 import { join } from "node:path"
 import type { BulkOutcome } from "brazecli-core"
 import { type Stringifier, stringify } from "csv-stringify"
+import { formulaSafe, visibleControls } from "../output/sanitize.js"
 
 /**
  * §33's columns, plus the three the ruling and the status work added: `record_id` and
@@ -75,10 +76,31 @@ export const openRecordsFile = (dir: string, operation: string): RecordsFile => 
   }
 }
 
+/**
+ * Free text from Braze, which a spreadsheet must not execute. Identifiers are deliberately absent:
+ * a prefixed `external_id` no longer joins back to the input file, and joining back is the only
+ * reason the column exists. The residual risk — a hostile identifier in somebody's own input file,
+ * opened in Excel — is named in `docs/security.md` rather than silently traded away.
+ */
+const FREE_TEXT = ["error_message", "note"] as const
+
+/**
+ * Applied to the finished row rather than at each field, so a column added to `COLUMNS` later is
+ * covered without anyone remembering to wrap it.
+ */
+const safe = (values: Record<string, string | number>): Record<string, string | number> =>
+  Object.fromEntries(
+    Object.entries(values).map(([column, value]) => {
+      if (typeof value !== "string") return [column, value]
+      const visible = visibleControls(value)
+      return [column, (FREE_TEXT as readonly string[]).includes(column) ? formulaSafe(visible) : visible]
+    }),
+  )
+
 const row = (outcome: BulkOutcome, operation: string): Record<string, string | number> => {
   const identity = outcome.identity ?? {}
 
-  return {
+  return safe({
     row_number: outcome.row,
     record_id: outcome.recordId,
     record_id_source: outcome.recordIdSource,
@@ -99,5 +121,5 @@ const row = (outcome: BulkOutcome, operation: string): Record<string, string | n
     error_code: outcome.errorCode ?? "",
     error_message: outcome.errorMessage ?? "",
     note: outcome.note ?? "",
-  }
+  })
 }

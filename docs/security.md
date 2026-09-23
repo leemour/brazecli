@@ -18,6 +18,28 @@ What this tool does with your Braze key, what it writes to disk, and what it ref
   else sees it, and anything else in this repository that talks to Braze has to do the same.
 - `braze profile list` prints names, endpoints and whether a key exists — never the key.
 
+## Text that came from somewhere else
+
+A campaign name, a catalog title, a user attribute and every error message Braze returns are edited
+outside this tool and handed back as data. A terminal executes what it is given — `\x1b[2K\x1b[1G`
+clears the line and returns the cursor, so a campaign name can overwrite output this tool already
+printed.
+
+- **Control characters are made visible, not removed**, wherever a person reads them: tables,
+  field lists, diagnostics on stderr and every column of `records.csv`. They appear as `\x1b`, so
+  you can see the value contained something strange rather than having it silently dropped.
+- **Machine output is untouched.** `--json` and `--jsonl` already escape control characters through
+  `JSON.stringify`, and those bytes are a contract with whatever parses them.
+- **`records.csv` marks free text as literal.** Excel and LibreOffice execute a cell that begins
+  `=`, `+`, `-` or `@` **even when the CSV quotes it**, so `error_message` and `note` get a leading
+  apostrophe when they start that way.
+
+⚠ **Identifier columns are deliberately left byte-exact** — `record_id`, `external_id`, `braze_id`
+and the alias columns. A prefixed identifier no longer joins back to the file it came from, and
+joining back is the only reason those columns exist. So an identifier taken from **your own input
+file** can still be a formula when you open the audit in a spreadsheet. If the file came from
+somewhere you do not control, import it as text rather than double-clicking it.
+
 ## Guards against the wrong workspace
 
 Three, and they fail in this order:
