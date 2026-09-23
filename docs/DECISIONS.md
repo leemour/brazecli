@@ -319,10 +319,9 @@ Cheap to revisit — one line, and no data format depends on it.
 ## Harvested from the journals, 2026-09-23
 
 **NEED-39 · Give the staging key `users.delete`, so a live check can clean up after itself?**
-**Yes (option A), and it has not been done yet.** Braze's REST API does not grant permissions to a
-key — only the dashboard does, so this is the owner's to do: Settings → API Keys → the staging key
-→ tick `users.delete`. Until then the two profiles the `RISK-3` measurement created cannot be
-removed, which is why `docs_ai/CLEANUP.md` still lists them.
+~~**Yes (option A).**~~ **Overturned 2026-09-23 by `NEED-60`: the owner cannot change permissions
+on that Braze workspace.** Braze grants permissions only through the dashboard, never through its
+REST API, so this was never ours to do. The two profiles stay — see `NEED-60`.
 
 **NEED-46 · Put `NPM_TOKEN` in the repository secrets so a release workflow can run?**
 **Moot — `NEED-49` removed the workflow.** Releases are made from a maintainer's machine, so no
@@ -331,7 +330,7 @@ npm's trusted publishing over OIDC should be checked first because it stores no 
 
 **NEED-53 · Remove the two staging user profiles the `RISK-3` measurement created?**
 **No — leave them.** «just leave these users». They carry one attribute, `brazecli_test: true`.
-The `docs_ai/CLEANUP.md` line stays as deliberately kept rather than as outstanding work.
+Closed for good by `NEED-60`.
 
 ## 2026-09-23
 
@@ -356,3 +355,12 @@ and `DOC-3`, published once when all four have landed, per [`releasing.md`](rele
 **Yes (option A).** «1 A». The ten files from 13–18 September go after their `NEED-nn` rulings are
 in this file and any finding still true is a backlog line or a paragraph in
 [`ARCHITECTURE.md`](ARCHITECTURE.md). The journal's own retention is one week.
+
+**NEED-60 · Keep tracking the two staging test profiles, or close the item?**
+**Close it.** «drop this from the backlog, can't update permissions in Braze so this stays». The
+owner cannot grant `users.delete` on that workspace, so the profiles `brazecli-risk3-1` and
+`brazecli-risk3-3` are permanent. They carry one attribute, `brazecli_test: true`, and nothing
+depends on their absence. The line is gone from `docs_ai/CLEANUP.md`; this entry is why.
+
+**A live check must not leave a profile behind again.** Nothing can remove one afterwards, so the
+constraint moves to the front: use an existing profile, or a dry run. `OPS-4` carries it.
