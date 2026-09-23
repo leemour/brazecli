@@ -1,5 +1,6 @@
 import Table from "cli-table3"
 import pc from "picocolors"
+import { visibleControls } from "./sanitize.js"
 
 export interface PrettyOptions {
   color: boolean
@@ -48,7 +49,7 @@ const isRowLike = (value: unknown[]): boolean =>
 const renderTable = (rows: Row[], paint: ReturnType<typeof palette>): string => {
   const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))]
   const table = new Table({
-    head: columns.map((column) => paint.bold(column)),
+    head: columns.map((column) => paint.bold(visibleControls(column))),
     // `chars: {}` is not enough — cli-table3 falls back to its own defaults for anything unset.
     style: { head: [], border: [], "padding-left": 0, "padding-right": 2 },
     chars: BORDERLESS,
@@ -59,16 +60,17 @@ const renderTable = (rows: Row[], paint: ReturnType<typeof palette>): string => 
 }
 
 const renderFields = (fields: Row, paint: ReturnType<typeof palette>): string => {
-  const width = Math.max(...Object.keys(fields).map((key) => key.length))
-  return Object.entries(fields)
-    .map(([key, value]) => `${paint.label(key.padEnd(width))}  ${cell(value)}`)
-    .join("\n")
+  const rows = Object.entries(fields).map(([key, value]) => ({ label: visibleControls(key), value }))
+  const width = Math.max(...rows.map((row) => row.label.length))
+  return rows.map((row) => `${paint.label(row.label.padEnd(width))}  ${cell(row.value)}`).join("\n")
 }
 
 const cell = (value: unknown): string => {
   if (value === null || value === undefined) return ""
-  if (typeof value === "object") return JSON.stringify(value)
-  return String(value)
+  // Sanitised before the table measures it, so an escaped sequence widens the column it is in
+  // rather than silently overflowing it.
+  if (typeof value === "object") return visibleControls(JSON.stringify(value))
+  return visibleControls(String(value))
 }
 
 const renderJson = (value: unknown): string => JSON.stringify(value, null, 2)

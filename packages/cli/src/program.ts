@@ -13,6 +13,7 @@ import { emptyConfig, loadConfig, OUTPUT_FORMATS } from "./config/file.js"
 import { resolvePaths } from "./config/paths.js"
 import { DOCUMENTATION, firstProfileHint } from "./documentation.js"
 import { exitCodeFor, GENERIC_FAILURE } from "./exit-codes.js"
+import { visibleControls } from "./output/sanitize.js"
 import { processStreams, type Streams } from "./output/stream.js"
 import { type GlobalFlags, resolveOutputFormat } from "./settings.js"
 import { VERSION } from "./version.js"
@@ -117,7 +118,9 @@ const report = (program: Command, options: ProgramOptions, streams: Streams, err
   const isTty = options.isTty ?? process.stdout.isTTY === true
   const format = resolveOutputFormat(program.opts<GlobalFlags>(), env, config, isTty)
 
-  streams.diagnostic(format === "pretty" ? `${error.code}: ${error.message}` : JSON.stringify({ error }))
+  streams.diagnostic(
+    format === "pretty" ? `${error.code}: ${visibleControls(error.message)}` : JSON.stringify({ error }),
+  )
 }
 
 /**
