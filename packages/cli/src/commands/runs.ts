@@ -4,7 +4,7 @@ import { emptyConfig, loadConfig } from "../config/file.js"
 import { resolvePaths } from "../config/paths.js"
 import { createRenderer } from "../output/renderer.js"
 import { processStreams, type Streams } from "../output/stream.js"
-import { findRun, listRuns } from "../runs/run.js"
+import { expiredRuns, findRun, listRuns, removeRun } from "../runs/run.js"
 import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
 
 export interface RunsContext {
@@ -88,6 +88,55 @@ export const runsCommand = (context: RunsContext = {}): Command => {
 
       // A bare path, so it composes: `cat "$(braze runs path <id>)/events.jsonl"`.
       streams.data(found.dir)
+    })
+
+  /**
+   * Nothing expires on a timer (`NEED-3`): a run's `records.csv` is the only evidence an operation
+   * happened, so removal is asked for explicitly, every time, with the age named and `--confirm`
+   * given. There is no retention setting in the config file, deliberately — a value set once and
+   * forgotten is how a timer gets reinvented.
+   */
+  command
+    .command("cleanup")
+    .requiredOption("--older-than <days>", "remove runs that started more than this many days ago", Number)
+    .option("--dry-run", "list what would be removed and remove nothing", false)
+    .option("--confirm", "actually remove them", false)
+    .description("remove old run directories — opt-in, never automatic")
+    .action(function (this: Command, flags: { olderThan: number; dryRun: boolean; confirm: boolean }) {
+      const { paths, renderer } = setup(this)
+
+      if (!Number.isFinite(flags.olderThan) || flags.olderThan < 1) {
+        throw new BrazeError("validation_error", "--older-than takes a whole number of days, 1 or more")
+      }
+
+      const before = new Date(Date.now() - flags.olderThan * 86_400_000)
+      const expired = expiredRuns(paths.runs, before)
+      const bytes = expired.reduce((total, run) => total + run.bytes, 0)
+      const runs = expired.map((run) => ({
+        runId: run.metadata.runId,
+        command: run.metadata.command,
+        startedAt: run.metadata.startedAt,
+        bytes: run.bytes,
+      }))
+
+      if (flags.dryRun) {
+        renderer.result({ dryRun: true, olderThanDays: flags.olderThan, runs, count: runs.length, bytes })
+        return
+      }
+
+      if (!flags.confirm) {
+        throw new BrazeError(
+          "confirmation_required",
+          expired.length === 0
+            ? `no run started more than ${flags.olderThan} days ago — nothing to remove`
+            : `${expired.length} runs would be removed, freeing ${bytes} bytes. Pass --confirm to do it, ` +
+                "or --dry-run to see which.",
+        )
+      }
+
+      for (const run of expired) removeRun(paths.runs, run.dir)
+
+      renderer.result({ removed: runs.length, bytes, runs })
     })
 
   return command
