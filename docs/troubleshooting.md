@@ -3,6 +3,11 @@
 The failures people actually hit, and what each one means. Every command prints its diagnostics on
 stderr; in `--json` mode the error is one JSON object there, with an exit code to branch on.
 
+**Start with `braze doctor`.** It reads only this machine — never Braze, never npm — and reports
+the config file and whether it is valid, where each profile's key comes from, whether
+`BRAZE_CONFIG_DIR` has given you a separate keyring, the runs directory, the version, and what to do
+next. It exits 0 whenever it could report, so an agent can run it first.
+
 ## "no profile named …" or "a profile is required"
 
 Exit code 3, `configuration_error`. There is no default profile on purpose. Name it as the first

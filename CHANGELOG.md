@@ -10,6 +10,10 @@ surface may still move between minor versions.
 
 ### Added
 
+- **`braze doctor` says why braze does not work on this machine.** Config file and whether it is
+  valid, where each profile's key comes from, whether the keyring is separate because of
+  `BRAZE_CONFIG_DIR`, the runs directory, the version, and the next step. It reaches neither Braze
+  nor npm, and exits 0 whenever it could report.
 - **`--quiet` keeps stderr to failures only.** Notes, successes, warnings and the daily update
   line are dropped; the result on stdout is unchanged.
 

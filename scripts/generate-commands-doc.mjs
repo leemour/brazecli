@@ -78,7 +78,7 @@ function render(tree, program) {
     "",
     "**A command that talks to Braze names its profile as the first word** — `braze staging",
     "campaigns list`. There is no default profile, deliberately (`NEED-25`). The commands that",
-    "never reach Braze — `profile`, `runs`, `commands`, `schema`, `skill`, `update` — take none.",
+    "never reach Braze — `profile`, `runs`, `commands`, `schema`, `skill`, `update`, `doctor` — take none.",
     "",
     "## Global options",
     "",
