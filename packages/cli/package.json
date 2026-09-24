@@ -1,6 +1,6 @@
 {
   "name": "@leemour/brazecli",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Braze REST API command line interface for AI agents, automation and people.",
   "license": "MIT",
   "author": "Viacheslav Ptsarev",
