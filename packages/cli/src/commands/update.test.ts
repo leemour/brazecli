@@ -98,6 +98,14 @@ describe("the daily update line", () => {
     expect(await updateNotice(argv, { environment: person, env: { ...env, ...extra } })).toBeUndefined()
   })
 
+  it.each([
+    ["after a profile name", ["prod", "update"]],
+    ["after an option's value", ["--profile", "prod", "update", "--check"]],
+    ["for completion", ["complete", "--", "camp"]],
+  ])("stays silent %s, when the command is update or complete", async (_name, argv) => {
+    expect(await updateNotice(argv, { environment: person, env })).toBeUndefined()
+  })
+
   it("stays silent when the config turns it off", async () => {
     const config = env.BRAZE_CONFIG_DIR as string
     mkdirSync(config, { recursive: true })

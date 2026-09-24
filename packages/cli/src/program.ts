@@ -8,7 +8,7 @@ import {
   visibleControls,
 } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
-import { Command, Option } from "commander"
+import { Command, CommanderError, Option } from "commander"
 import { apiCommand } from "./commands/api.js"
 import { catalogCommands } from "./commands/catalog.js"
 import { commandsCommand } from "./commands/commands.js"
@@ -89,6 +89,18 @@ export const run = async (argv: string[], options: ProgramOptions = {}): Promise
   const program = buildProgram(options)
   const { profile, rest } = takeProfile(argv, options)
 
+  // Commander otherwise calls process.exit itself — for --help, for --version and for every usage
+  // error — so none of them reached this function, a JSON caller got a line of prose, and a test
+  // could not run them. Every level, because `braze campaigns list --bogus` fails in the leaf.
+  // Its error text is held back: in a machine mode the failure is reported as JSON instead.
+  const held: string[] = []
+  forEachCommand(program, (command) =>
+    command.exitOverride().configureOutput({
+      writeOut: (text) => streams.data(text.replace(/\n$/, "")),
+      writeErr: (text) => held.push(text.replace(/\n$/, "")),
+    }),
+  )
+
   try {
     await program.parseAsync(profile ? ["--profile", profile, ...rest] : rest, { from: "user" })
     return 0
@@ -97,7 +109,16 @@ export const run = async (argv: string[], options: ProgramOptions = {}): Promise
       report(program, options, streams, { code: error.code, message: error.message, ...error.details })
       return exitCodeFor(error.code)
     }
-    if (isCommanderExit(error)) return error.exitCode
+    if (error instanceof CommanderError) {
+      if (!USAGE_ERRORS.has(error.code)) {
+        for (const text of held) streams.diagnostic(text)
+        return error.exitCode
+      }
+      if (formatOf(program, options) === "pretty") for (const text of held) streams.diagnostic(text)
+      else
+        report(program, options, streams, { code: "validation_error", message: error.message.replace(/^error: /, "") })
+      return exitCodeFor("validation_error")
+    }
 
     const message = error instanceof Error ? error.message : String(error)
     report(program, options, streams, { code: "generic_failure", message })
@@ -117,6 +138,14 @@ interface ReportedError {
  * data, and an agent reading it must never mistake a refusal for a result.
  */
 const report = (program: Command, options: ProgramOptions, streams: Streams, error: ReportedError): void => {
+  streams.diagnostic(
+    formatOf(program, options) === "pretty"
+      ? `${error.code}: ${visibleControls(error.message)}`
+      : JSON.stringify({ error }),
+  )
+}
+
+const formatOf = (program: Command, options: ProgramOptions) => {
   const env = options.env ?? process.env
 
   let config = emptyConfig()
@@ -126,12 +155,24 @@ const report = (program: Command, options: ProgramOptions, streams: Streams, err
     // Reporting a failure must not depend on the configuration, which may be the failure.
   }
 
-  const isTty = options.isTty ?? process.stdout.isTTY === true
-  const format = resolveOutputFormat(program.opts<GlobalFlags>(), env, config, isTty)
+  return resolveOutputFormat(program.opts<GlobalFlags>(), env, config, options.isTty ?? process.stdout.isTTY === true)
+}
 
-  streams.diagnostic(
-    format === "pretty" ? `${error.code}: ${visibleControls(error.message)}` : JSON.stringify({ error }),
-  )
+/** The Commander failures that mean "the command line is wrong" — `validation_error`, exit 2. */
+const USAGE_ERRORS = new Set([
+  "commander.unknownOption",
+  "commander.unknownCommand",
+  "commander.missingArgument",
+  "commander.optionMissingArgument",
+  "commander.missingMandatoryOptionValue",
+  "commander.invalidArgument",
+  "commander.excessArguments",
+  "commander.conflictingOption",
+])
+
+const forEachCommand = (command: Command, apply: (command: Command) => void): void => {
+  apply(command)
+  for (const child of command.commands) forEachCommand(child, apply)
 }
 
 /**
@@ -198,15 +239,3 @@ const takeProfile = (argv: string[], options: ProgramOptions): { profile?: strin
   }
   return { rest: argv }
 }
-
-interface CommanderExit {
-  code: string
-  exitCode: number
-}
-
-const isCommanderExit = (error: unknown): error is CommanderExit =>
-  typeof error === "object" &&
-  error !== null &&
-  "exitCode" in error &&
-  typeof (error as CommanderExit).exitCode === "number" &&
-  String((error as CommanderExit).code).startsWith("commander.")
