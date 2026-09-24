@@ -38,7 +38,12 @@ export const runOperation = async (
   const streams = context.streams ?? processStreams
 
   const settings = resolveSettings(globals, { ...context, warn: context.warn ?? streams.diagnostic })
-  const renderer = createRenderer({ format: settings.outputFormat, color: settings.color, streams })
+  const renderer = createRenderer({
+    format: settings.outputFormat,
+    color: settings.color,
+    streams,
+    quiet: settings.quiet,
+  })
 
   const path = resolvePath(operation.path, request.pathParams ?? {})
 

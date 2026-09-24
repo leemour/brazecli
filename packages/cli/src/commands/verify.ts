@@ -34,7 +34,12 @@ export const verifyCommand = (context: VerifyContext = {}): Command =>
       const streams = context.streams ?? processStreams
 
       const settings = resolveSettings(globals, { ...context, warn: context.warn ?? streams.diagnostic })
-      const renderer = createRenderer({ format: settings.outputFormat, color: settings.color, streams })
+      const renderer = createRenderer({
+        format: settings.outputFormat,
+        color: settings.color,
+        streams,
+        quiet: settings.quiet,
+      })
 
       const operation = findOperation(MAU)
       if (!operation) throw new BrazeError("configuration_error", `the catalog has no ${MAU} operation`)

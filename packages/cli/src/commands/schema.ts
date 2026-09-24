@@ -1,9 +1,7 @@
-import { createRenderer, processStreams, type Streams } from "@leemour/cli-core"
+import type { Streams } from "@leemour/cli-core"
 import { BrazeError, catalog, findByCommand, findOperation, type Operation } from "brazecli-core"
 import { Command } from "commander"
-import { emptyConfig, loadConfig } from "../config/file.js"
-import { resolvePaths } from "../config/paths.js"
-import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
+import { outputFor } from "../output/context.js"
 
 export interface SchemaContext {
   env?: NodeJS.ProcessEnv
@@ -25,28 +23,7 @@ export const schemaCommand = (context: SchemaContext = {}): Command => {
     .argument("<operation...>", "an operation id (campaigns.list.get) or the command words (campaigns list)")
 
   command.action(function (this: Command, words: string[]) {
-    const root = this.parent ?? this
-    const env = context.env ?? process.env
-
-    let config = emptyConfig()
-    try {
-      config = loadConfig(resolvePaths(env).config)
-    } catch {
-      // Describing an operation must not depend on a configuration being readable.
-    }
-
-    const streams = context.streams ?? processStreams
-    const format = resolveOutputFormat(
-      root.opts<GlobalFlags>(),
-      env,
-      config,
-      context.isTty ?? process.stdout.isTTY === true,
-    )
-    const renderer = createRenderer({
-      format,
-      color: resolveColor(root.opts<GlobalFlags>(), env, config, context.isTty ?? process.stderr.isTTY === true),
-      streams,
-    })
+    const { renderer } = outputFor(this, context)
 
     renderer.result(describe(resolve(words)))
   })

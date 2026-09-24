@@ -1,11 +1,9 @@
-import { createRenderer, EXIT_CODES, GENERIC_FAILURE, processStreams, type Streams } from "@leemour/cli-core"
+import { EXIT_CODES, GENERIC_FAILURE, type Streams } from "@leemour/cli-core"
 import { describeOptions, describeProgram, flatten } from "@leemour/cli-core/commands"
 import type { Command } from "commander"
 import { Command as CommanderCommand } from "commander"
-import { emptyConfig, loadConfig } from "../config/file.js"
-import { resolvePaths } from "../config/paths.js"
 import { DOCUMENTATION } from "../documentation.js"
-import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
+import { outputFor, rootOf } from "../output/context.js"
 import { VERSION } from "../version.js"
 
 export interface CommandsContext {
@@ -25,24 +23,8 @@ export const commandsCommand = (context: CommandsContext = {}): Command => {
   )
 
   command.action(function (this: Command) {
-    const env = context.env ?? process.env
-    const root = this.parent ?? this
-    const globals = root.opts<GlobalFlags>()
-
-    let config = emptyConfig()
-    try {
-      config = loadConfig(resolvePaths(env).config)
-    } catch {
-      // Listing the command surface must not depend on a configuration being readable.
-    }
-
-    const format = resolveOutputFormat(globals, env, config, context.isTty ?? process.stdout.isTTY === true)
-    const streams = context.streams ?? processStreams
-    const renderer = createRenderer({
-      format,
-      color: resolveColor(globals, env, config, context.isTty ?? process.stderr.isTTY === true),
-      streams,
-    })
+    const root = rootOf(this)
+    const { format, renderer } = outputFor(this, context)
 
     const commands = describeProgram(root)
 

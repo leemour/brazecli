@@ -18,10 +18,10 @@ import { runsCommand } from "./commands/runs.js"
 import { schemaCommand } from "./commands/schema.js"
 import { skillCommand } from "./commands/skill.js"
 import { selfUpdateCommand } from "./commands/update.js"
-import { emptyConfig, loadConfig, OUTPUT_FORMATS } from "./config/file.js"
+import { loadConfig, OUTPUT_FORMATS } from "./config/file.js"
 import { resolvePaths } from "./config/paths.js"
 import { DOCUMENTATION, firstProfileHint } from "./documentation.js"
-import { type GlobalFlags, resolveOutputFormat } from "./settings.js"
+import { outputFor } from "./output/context.js"
 import type { UpdateEnvironment } from "./update.js"
 import { VERSION } from "./version.js"
 
@@ -48,6 +48,7 @@ export const buildProgram = (options: ProgramOptions = {}): Command => {
     .option("--json", "one deterministic JSON value on stdout, whatever the terminal is")
     .addOption(new Option("--output <format>", "output mode").choices([...OUTPUT_FORMATS]))
     .option("--no-color", "never emit ANSI colour")
+    .option("--quiet", "no notes, successes or warnings on stderr; results and failures are unchanged")
     .option("--dry-run", "resolve, validate and count, but send nothing")
     .option("--confirm", "required before any write; never an interactive prompt")
     .option("--paginate", "walk the pages of a paged read and return them as one value")
@@ -145,18 +146,8 @@ const report = (program: Command, options: ProgramOptions, streams: Streams, err
   )
 }
 
-const formatOf = (program: Command, options: ProgramOptions) => {
-  const env = options.env ?? process.env
-
-  let config = emptyConfig()
-  try {
-    config = loadConfig(resolvePaths(env).config)
-  } catch {
-    // Reporting a failure must not depend on the configuration, which may be the failure.
-  }
-
-  return resolveOutputFormat(program.opts<GlobalFlags>(), env, config, options.isTty ?? process.stdout.isTTY === true)
-}
+// Reporting a failure must not depend on the configuration, which may be the failure.
+const formatOf = (program: Command, options: ProgramOptions) => outputFor(program, options).format
 
 /** The Commander failures that mean "the command line is wrong" — `validation_error`, exit 2. */
 const USAGE_ERRORS = new Set([

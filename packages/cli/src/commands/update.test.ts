@@ -75,6 +75,23 @@ describe("braze update", () => {
   })
 })
 
+describe("--quiet", () => {
+  it("drops the note and keeps the answer", async () => {
+    const run2 = async (argv: string[]) => {
+      const streams = captureStreams()
+      await run(argv, { env, streams, isTty: true, update: { fetch: npmSays(VERSION), scriptPath: NPM_INSTALL } })
+      return streams
+    }
+
+    const loud = await run2(["update"])
+    const quiet = await run2(["--quiet", "update"])
+
+    expect(loud.stderr.join("")).toContain("is the newest")
+    expect(quiet.stderr).toEqual([])
+    expect(quiet.stdout).toEqual(loud.stdout)
+  })
+})
+
 describe("the daily update line", () => {
   const person: UpdateEnvironment = {
     fetch: npmSays("99.0.0"),
