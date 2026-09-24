@@ -1,6 +1,6 @@
 {
   "name": "brazecli-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "The Braze client inside brazecli. Web Platform APIs only — no Node. Not published separately.",
   "license": "MIT",
