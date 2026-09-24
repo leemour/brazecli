@@ -83,8 +83,9 @@ export const updateNotice = async (
   { environment = {}, env = process.env }: { environment?: UpdateEnvironment; env?: NodeJS.ProcessEnv } = {},
 ): Promise<string | undefined> => {
   try {
-    const [command] = argv.filter((word) => !word.startsWith("-"))
-    if (command === "complete" || command === "update") return undefined
+    // Anywhere, not the first word: that can be a profile (`braze prod update`) or an option's value,
+    // and a notice after `update` names the version just installed as the one to get.
+    if (argv.includes("complete") || argv.includes("update")) return undefined
 
     let config = emptyConfig()
     try {

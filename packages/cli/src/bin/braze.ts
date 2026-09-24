@@ -22,4 +22,4 @@ const argv = process.argv.slice(2)
 const notice = updateNotice(argv)
 process.exitCode = await run(argv)
 const line = await notice
-if (line) process.stderr.write(`${line}\n`)
+if (line && process.exitCode === 0) process.stderr.write(`${line}\n`)

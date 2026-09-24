@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 follow [semantic versioning](https://semver.org/spec/v2.0.0.html) — with `0.x` meaning the command
 surface may still move between minor versions.
 
+## Unreleased
+
+### Fixed
+
+- **A mistyped command line is now a `validation_error`, exit 2, and JSON in a machine mode.** An
+  unknown option, a missing required option or a bad choice used to print a line of text and exit
+  1 — the code for "we have no idea what happened" — even under `--json`.
+- The "a newer version is out" line no longer follows `braze <profile> update`, where it named the
+  version just installed, and no longer follows a command that failed.
+
 ## 0.3.0 — 2026-09-24
 
 ### Added
