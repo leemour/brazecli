@@ -18,6 +18,8 @@ interface DiscoveredCommand {
   path: string[]
   usage: string
   operationId?: string
+  origin: string
+  mutates?: boolean
   commands: DiscoveredCommand[]
 }
 
@@ -101,7 +103,7 @@ describe("braze commands", () => {
       documentation: "https://www.braze.com/docs/api/home",
     })
     // Leaves only: `campaigns` is scaffolding, `campaigns list` is a thing you can run.
-    expect(surface.endpoints.runnableCommands).toBeGreaterThan(90)
+    expect(surface.endpoints.runnableCommands).toBe(108)
     expect(surface.endpoints.escapeHatch).toContain("braze api")
   })
 
@@ -143,5 +145,40 @@ describe("the operation id on the discovery surface", () => {
       const tagged = leaves([command]).filter((leaf) => "operationId" in leaf)
       expect(tagged, name).toEqual([])
     }
+  })
+})
+
+describe("what the registry says about each command", () => {
+  const leaves = (commands: DiscoveredCommand[]): DiscoveredCommand[] =>
+    commands.flatMap((command) => (command.commands.length === 0 ? [command] : leaves(command.commands)))
+  const at = (commands: DiscoveredCommand[], ...path: string[]): DiscoveredCommand =>
+    path.reduce<DiscoveredCommand>((command, name) => find(command.commands, name), {
+      commands,
+    } as DiscoveredCommand)
+
+  it("labels every catalog command generated, and every other one handwritten", async () => {
+    const { surface } = await discover()
+    const all = leaves(surface.commands)
+
+    expect(all.filter((command) => command.origin === "generated")).toEqual(
+      all.filter((command) => command.operationId !== undefined),
+    )
+    expect(at(surface.commands, "profile", "add").origin).toBe("handwritten")
+  })
+
+  it("marks a write as mutating, and leaves the POST-shaped exports reads, as the --confirm guard does", async () => {
+    const { surface } = await discover()
+
+    expect(at(surface.commands, "users", "track").mutates).toBe(true)
+    expect(at(surface.commands, "users", "export", "ids")).not.toHaveProperty("mutates")
+    expect(at(surface.commands, "campaigns", "list")).not.toHaveProperty("mutates")
+  })
+
+  it("lists update but not the completion command a shell calls", async () => {
+    const { surface } = await discover()
+    const names = surface.commands.map((command: DiscoveredCommand) => command.name)
+
+    expect(names).toContain("update")
+    expect(names).not.toContain("complete")
   })
 })

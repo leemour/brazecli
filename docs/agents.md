@@ -43,8 +43,9 @@ braze commands --json
 ```
 
 Every command, its arguments and options — including which take a value and which are required —
-plus the exit code for each kind of failure. It walks the live command tree, so it cannot drift
-from the program. `braze schema <operation> --json` answers the same question for one operation,
+plus the exit code for each kind of failure. Each command says whether it is `generated` from
+Braze's collection or `handwritten`, and a command that writes to Braze carries `mutates: true`.
+It walks the live command tree, so it cannot drift from the program. `braze schema <operation> --json` answers the same question for one operation,
 including the request body and whether it writes.
 
 **2. Read stdout, branch on the exit code.**

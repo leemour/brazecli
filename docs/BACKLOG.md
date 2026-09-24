@@ -53,7 +53,6 @@ Nothing is blocked on the owner.
 
 | Number | Task | P |
 |---|---|---|
-| `OPS-3` | Shell completions for bash, zsh and fish, generated from the catalog | P3 |
 | `CORE-14` | MCP tool definitions generated from the same catalog as the commands and the docs | P3 |
 | `BULK-11` | `braze run resume <run-id>` — `records.csv` already answers submitted / failed / unknown / not started per source record, so the data exists | P3 |
 | `CAT-12` | Scheduled drift check against the live Braze collection, opening a pull request rather than changing behaviour silently | P3 |

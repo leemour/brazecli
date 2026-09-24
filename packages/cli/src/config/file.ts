@@ -52,6 +52,8 @@ export const ConfigSchema = v.object({
     {},
   ),
   logging: v.optional(v.object({ level: v.optional(v.string()) }), {}),
+  /** The daily "a newer braze exists" line on a terminal. Absent means on. */
+  updateCheck: v.optional(v.boolean()),
   profiles: v.optional(v.record(v.string(), ProfileSchema), {}),
 })
 

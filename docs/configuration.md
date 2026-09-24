@@ -28,6 +28,8 @@ also moves the keyring namespace, so a temporary config directory does not touch
 | `BRAZE_RUNS_DIR` | where run artifacts are written |
 | `BRAZE_OUTPUT` | `auto`, `pretty`, `json` or `jsonl` |
 | `BRAZE_LOG` | log level for the run's `events.jsonl`: `debug`, `info`, `warn`, `error` |
+| `BRAZE_NO_UPDATE_CHECK` | any value: no daily "a newer version exists" line |
+| `BRAZE_STATE_DIR` | where `update-check.json` is kept |
 
 `BRAZE_API_KEY` with `BRAZE_REST_ENDPOINT` is a complete profile: with both set, nothing has to be
 configured on the machine at all. That is the CI shape.
@@ -51,6 +53,7 @@ Written by `braze profile add`, and safe to edit by hand. Every field below is o
     "maxRetryAfterMs": 30000
   },
   "bulk": { "concurrency": 4 },
+  "updateCheck": true,
   "profiles": {
     "production": {
       "restEndpoint": "https://rest.fra-01.braze.eu",
@@ -70,6 +73,7 @@ Written by `braze profile add`, and safe to edit by hand. Every field below is o
 | `http.*` | per-attempt timeout (default 30 000 ms), retries after the first (default 1), and the backoff between them (250 ms doubling to a 10 s ceiling) |
 | `http.maxRetryAfterMs` | the longest `Retry-After` from Braze that will be waited out rather than refused (default 30 000 ms) |
 | `bulk.concurrency` | requests in flight during a bulk run, 1–32 |
+| `updateCheck` | `false` stops the daily "a newer version exists" line; `braze update` still works |
 | `profiles.<name>.readOnly` | refuse every write for this profile |
 | `profiles.<name>.expectMaxMonthlyActives` | the ceiling `braze profile verify` checks against |
 
