@@ -1,7 +1,7 @@
 import { join } from "node:path"
+import type { KeyringStore, RenderFormat } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import { type CredentialSource, Credentials } from "./auth/credentials.js"
-import type { KeyringStore } from "./auth/keyring.js"
 import { type Config, loadConfig, type OutputFormat } from "./config/file.js"
 import { type Paths, resolvePaths } from "./config/paths.js"
 import { firstProfileHint } from "./documentation.js"
@@ -36,7 +36,7 @@ export interface Settings {
   expectMaxMonthlyActives: number | undefined
   apiKey: string
   apiKeySource: CredentialSource
-  outputFormat: OutputFormat
+  outputFormat: RenderFormat
   color: boolean
   timeoutMs: number | undefined
   retries: number | undefined
@@ -159,7 +159,7 @@ export const resolveOutputFormat = (
   env: NodeJS.ProcessEnv,
   config: Config,
   isTty: boolean,
-): OutputFormat => {
+): RenderFormat => {
   if (flags.json) return "json"
   if (flags.output && flags.output !== "auto") return flags.output
 

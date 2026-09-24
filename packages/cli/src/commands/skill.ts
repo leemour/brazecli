@@ -2,12 +2,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { createRenderer, processStreams, type Streams } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import { Command } from "commander"
 import { emptyConfig, loadConfig } from "../config/file.js"
 import { resolvePaths } from "../config/paths.js"
-import { createRenderer } from "../output/renderer.js"
-import { processStreams, type Streams } from "../output/stream.js"
 import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
 
 export interface SkillContext {

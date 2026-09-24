@@ -1,9 +1,10 @@
 import { once } from "node:events"
 import { createWriteStream } from "node:fs"
 import { join } from "node:path"
+import { visibleControls } from "@leemour/cli-core"
 import type { BulkOutcome } from "brazecli-core"
 import { type Stringifier, stringify } from "csv-stringify"
-import { formulaSafe, visibleControls } from "../output/sanitize.js"
+import { formulaSafe } from "../output/sanitize.js"
 
 /**
  * §33's columns, plus the three the ruling and the status work added: `record_id` and

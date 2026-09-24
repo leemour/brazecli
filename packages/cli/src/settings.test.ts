@@ -1,9 +1,9 @@
 import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { memoryKeyring } from "@leemour/cli-core"
 import { describe, expect, it } from "vitest"
 import { keyringService } from "./auth/credentials.js"
-import { memoryKeyring } from "./auth/keyring.js"
 import { emptyConfig, saveConfig } from "./config/file.js"
 import { resolveColor, resolveOutputFormat, resolveSettings } from "./settings.js"
 
