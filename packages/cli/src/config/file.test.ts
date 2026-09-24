@@ -1,9 +1,9 @@
-import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
+import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { BrazeError } from "brazecli-core"
 import { describe, expect, it } from "vitest"
-import { emptyConfig, loadConfig, saveConfig, writeSecurely } from "./file.js"
+import { emptyConfig, loadConfig, saveConfig } from "./file.js"
 
 const tempDir = () => mkdtempSync(join(tmpdir(), "brazecli-test-"))
 
@@ -29,7 +29,7 @@ describe("config file", () => {
 
   it("names the field when the file is not a valid config", () => {
     const dir = tempDir()
-    writeSecurely(join(dir, "config.json"), JSON.stringify({ version: 1, profiles: { p: {} } }), 0o644)
+    writeFileSync(join(dir, "config.json"), JSON.stringify({ version: 1, profiles: { p: {} } }))
 
     expect(() => loadConfig(dir)).toThrow(/profiles\.p\.restEndpoint/)
   })
@@ -56,35 +56,5 @@ describe("config file", () => {
     } catch (error) {
       expect((error as BrazeError).code).toBe("configuration_error")
     }
-  })
-})
-
-describe("writeSecurely", () => {
-  it("locks down the directory as well as the file", () => {
-    const dir = join(tempDir(), "nested")
-    const path = join(dir, "credentials.json")
-
-    writeSecurely(path, "{}", 0o600)
-
-    // 0o600 on the file is worth little inside a world-readable directory.
-    expect(statSync(path).mode & 0o777).toBe(0o600)
-    expect(statSync(dir).mode & 0o777).toBe(0o700)
-  })
-
-  it("leaves no temporary file behind", () => {
-    const dir = tempDir()
-    writeSecurely(join(dir, "credentials.json"), "{}", 0o600)
-
-    expect(readdirSync(dir)).toEqual(["credentials.json"])
-  })
-
-  it("replaces the previous contents rather than appending to them", () => {
-    const dir = tempDir()
-    const path = join(dir, "credentials.json")
-
-    writeSecurely(path, '{"a":1}', 0o600)
-    writeSecurely(path, '{"b":2}', 0o600)
-
-    expect(JSON.parse(readFileSync(path, "utf8"))).toEqual({ b: 2 })
   })
 })

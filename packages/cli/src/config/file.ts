@@ -1,5 +1,4 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { configFilePath, loadConfigFile, saveConfigFile } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import * as v from "valibot"
 
@@ -62,52 +61,15 @@ export type Profile = v.InferOutput<typeof ProfileSchema>
 
 export const emptyConfig = (): Config => v.parse(ConfigSchema, { version: 1 })
 
-export const configPath = (configDir: string): string => join(configDir, "config.json")
-
+/** cli-core names the bad field; braze adds the code a script branches on (`CLI-12`: exit 3). */
 export const loadConfig = (configDir: string): Config => {
-  let text: string
   try {
-    text = readFileSync(configPath(configDir), "utf8")
-  } catch {
-    return emptyConfig()
+    return loadConfigFile(configFilePath(configDir), ConfigSchema, emptyConfig)
+  } catch (error) {
+    throw new BrazeError("configuration_error", error instanceof Error ? error.message : String(error))
   }
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(text)
-  } catch {
-    throw new BrazeError("configuration_error", `${configPath(configDir)} is not valid JSON`)
-  }
-
-  const result = v.safeParse(ConfigSchema, parsed)
-  if (!result.success) {
-    const problems = result.issues.map((issue) => `${v.getDotPath(issue) ?? "(root)"}: ${issue.message}`)
-    throw new BrazeError(
-      "configuration_error",
-      `${configPath(configDir)} is not a valid config:\n  ${problems.join("\n  ")}`,
-    )
-  }
-  return result.output
 }
 
 export const saveConfig = (configDir: string, config: Config): void => {
-  writeSecurely(configPath(configDir), `${JSON.stringify(config, null, 2)}\n`, 0o644)
-}
-
-/**
- * Atomic, and the directory is locked down before the first write.
- *
- * Atomic because a partial `credentials.json` loses **every** profile's key, not just the one
- * being written, and the window for that is exactly a Ctrl+C during `profile add`. The directory
- * mode matters as much as the file's: `0o600` on the file is worth little inside a world-readable
- * directory. ⚠ Both modes are ignored on Windows.
- */
-export const writeSecurely = (path: string, contents: string, mode: number): void => {
-  const dir = dirname(path)
-  mkdirSync(dir, { recursive: true, mode: 0o700 })
-
-  const temp = join(dir, `.${Date.now()}-${process.pid}.tmp`)
-  writeFileSync(temp, contents, { mode })
-  // rename within the same directory is atomic on every platform we target.
-  renameSync(temp, path)
+  saveConfigFile(configFilePath(configDir), config)
 }

@@ -29,7 +29,7 @@ also moves the keyring namespace, so a temporary config directory does not touch
 | `BRAZE_OUTPUT` | `auto`, `pretty`, `json` or `jsonl` |
 | `BRAZE_LOG` | log level for the run's `events.jsonl`: `debug`, `info`, `warn`, `error` |
 | `BRAZE_NO_UPDATE_CHECK` | any value: no daily "a newer version exists" line |
-| `BRAZE_STATE_DIR` | where `update-check.json` is kept |
+| `BRAZE_STATE_DIR` | where `update-check.json` is kept, and `runs/` unless `BRAZE_RUNS_DIR` is set |
 
 `BRAZE_API_KEY` with `BRAZE_REST_ENDPOINT` is a complete profile: with both set, nothing has to be
 configured on the machine at all. That is the CI shape.

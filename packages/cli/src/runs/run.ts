@@ -1,6 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
-import { writeSecurely } from "../config/file.js"
+import { writeSecurely } from "@leemour/cli-core"
 import { createRunLogger, type RunLogger } from "../logging/logger.js"
 
 export type RunStatus = "success" | "failed" | "cancelled" | "dry-run"
