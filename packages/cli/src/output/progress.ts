@@ -1,4 +1,4 @@
-import type { Streams } from "./stream.js"
+import type { Streams } from "@leemour/cli-core"
 
 export interface Progress {
   /** Called per record. Cheap by design: a 750 000-record run calls it 750 000 times. */

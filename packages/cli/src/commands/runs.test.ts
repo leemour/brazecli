@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { captureStreams } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import { beforeEach, describe, expect, it } from "vitest"
-import { captureStreams } from "../output/stream.js"
 import { runsCommand } from "./runs.js"
 
 let runsDir: string

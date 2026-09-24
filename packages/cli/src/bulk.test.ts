@@ -1,12 +1,11 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { captureStreams, createRenderer } from "@leemour/cli-core"
 import { BrazeClient, findOperation } from "brazecli-core"
 import { brazeResponses, mockBraze } from "brazecli-core/testing"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { runBulk } from "./bulk.js"
-import { createRenderer } from "./output/renderer.js"
-import { captureStreams } from "./output/stream.js"
 import { type Run, startRun } from "./runs/run.js"
 
 const track = findOperation("users.track.create") as NonNullable<ReturnType<typeof findOperation>>

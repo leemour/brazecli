@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
+import { type KeyringStore, systemKeyring } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import type { CredentialStorage } from "../config/file.js"
 import { writeSecurely } from "../config/file.js"
-import { type KeyringStore, systemKeyring } from "./keyring.js"
 
 const KEYRING_SERVICE = "brazecli"
 

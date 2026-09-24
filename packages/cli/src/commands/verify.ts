@@ -1,8 +1,7 @@
+import { createRenderer, processStreams, type Streams } from "@leemour/cli-core"
 import { BrazeClient, BrazeError, findOperation } from "brazecli-core"
 import { Command } from "commander"
 import { loadConfig, saveConfig } from "../config/file.js"
-import { createRenderer } from "../output/renderer.js"
-import { processStreams, type Streams } from "../output/stream.js"
 import { type GlobalFlags, type ResolveOptions, resolveSettings } from "../settings.js"
 import { userAgent } from "../user-agent.js"
 

@@ -1,10 +1,10 @@
 import { mkdtempSync, readFileSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { brokenKeyring, memoryKeyring } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import { describe, expect, it, vi } from "vitest"
 import { Credentials, keyringService } from "./credentials.js"
-import { brokenKeyring, memoryKeyring } from "./keyring.js"
 
 const tempDir = () => mkdtempSync(join(tmpdir(), "brazecli-creds-"))
 

@@ -1,10 +1,9 @@
 import { mkdtempSync, readFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { captureStreams, memoryKeyring } from "@leemour/cli-core"
 import { beforeEach, describe, expect, it } from "vitest"
 import { keyringService } from "../auth/credentials.js"
-import { memoryKeyring } from "../auth/keyring.js"
-import { captureStreams } from "../output/stream.js"
 import { run } from "../program.js"
 
 let configDir: string

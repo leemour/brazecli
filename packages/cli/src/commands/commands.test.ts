@@ -1,8 +1,8 @@
 import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { captureStreams } from "@leemour/cli-core"
 import { beforeEach, describe, expect, it } from "vitest"
-import { captureStreams } from "../output/stream.js"
 import { run } from "../program.js"
 
 let configDir: string

@@ -54,7 +54,7 @@ export const home = () => process.env.HOME
 
 ### No test may reach a real keychain
 
-The OS keyring is behind one injected function (`packages/cli/src/auth/keyring.ts`), defaulted to
+The OS keyring is behind one injected function (`KeyringStore` from `@leemour/cli-core`), defaulted to
 the real `Entry` and replaced by `memoryKeyring()` or `brokenKeyring()` in every test. Setting
 `credentialStorage: "file"` in a test config would be necessary but not sufficient — one test that
 forgets it writes to the developer's actual keychain. The seam makes it impossible rather than
@@ -62,9 +62,10 @@ discouraged.
 
 ### The machine-output invariant
 
-*Partly built.* `packages/cli/src/output/stream.ts` splits the two halves and
-`profile.test.ts` asserts that stdout parses as JSON while the diagnostics land on stderr. The
-whole-command test lands with the renderer in step 5. In `--json` and `--jsonl` modes,
+`Streams` from `@leemour/cli-core` splits the two halves, and
+[`tests/machine-output.test.ts`](../tests/machine-output.test.ts) runs the built `braze` to hold it.
+*(Correction 2026-09-24: this said "partly built" and promised the whole-command test for a later
+step; that test has existed since then.)* In `--json` and `--jsonl` modes,
 **stdout carries data and nothing else**: no spinner frame, no `✓`, no warning, no progress bar,
 no ANSI. Diagnostics go to stderr. The test pipes a real command and asserts stdout parses as a
 single JSON value with a byte-for-byte match on the serialized form.
