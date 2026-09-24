@@ -1,7 +1,7 @@
 ---
 name: braze
 description: Read from and write to the Braze REST API with the `braze` command line tool — campaigns, canvases, users, catalogs, segments, exports — including bulk updates from a JSONL or CSV file. Use whenever a task involves Braze data, a Braze campaign or canvas, or a Braze user profile. Covers discovering the available commands, the profile rules, and which failures must never be retried.
-version: 0.2.0
+version: 0.3.0
 ---
 
 # Braze from the command line

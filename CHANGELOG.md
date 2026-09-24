@@ -6,13 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 follow [semantic versioning](https://semver.org/spec/v2.0.0.html) — with `0.x` meaning the command
 surface may still move between minor versions.
 
-## Unreleased
+## 0.3.0 — 2026-09-24
 
 ### Added
 
-- **`braze complete zsh|bash|fish|powershell`** prints a completion script. Tab then completes
-  commands, options and your profile names. It reads only the local `config.json` and never
-  reaches Braze.
+- **Tab now completes braze's commands, options and your profile names.** `braze complete
+  zsh|bash|fish|powershell` prints the script to source. It reads only the local `config.json` and
+  never reaches Braze.
 - **`braze update`** updates braze with whichever of npm, pnpm or bun installed it; `--check` only
   looks. It never runs by itself. Once a day, on a terminal, braze says in one line when a newer
   version exists. JSON modes, CI, `BRAZE_NO_UPDATE_CHECK` and `"updateCheck": false` keep it quiet.
