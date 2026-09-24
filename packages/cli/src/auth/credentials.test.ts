@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, statSync } from "node:fs"
+import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { brokenKeyring, memoryKeyring } from "@leemour/cli-core"
@@ -103,7 +103,7 @@ describe("removal", () => {
     store.write("staging", "k2")
     store.remove("production")
 
-    expect(JSON.parse(readFileSync(join(dir, "credentials.json"), "utf8"))).toEqual({ staging: { apiKey: "k2" } })
+    expect(JSON.parse(readFileSync(join(dir, "credentials.json"), "utf8"))).toEqual({ staging: { secret: "k2" } })
   })
 })
 
@@ -118,7 +118,47 @@ describe("keyring namespacing", () => {
   it("scopes the service name when BRAZE_CONFIG_DIR points somewhere else", () => {
     const service = keyringService("/tmp/throwaway", { BRAZE_CONFIG_DIR: "/tmp/throwaway" })
 
-    expect(service).not.toBe("brazecli")
-    expect(service).toContain("/tmp/throwaway")
+    expect(service).toBe("brazecli:/tmp/throwaway")
+  })
+
+  // The addresses keys were saved under before braze took its credentials from cli-core. A
+  // different address reads as "no key" for every profile on every desktop.
+  it.each([
+    ["the real config directory", {}, "brazecli"],
+    ["a throwaway one", { BRAZE_CONFIG_DIR: "/tmp/throwaway" }, "brazecli:/tmp/throwaway"],
+  ])("reads a key where it was saved before, from %s", (_name, env, service) => {
+    const keyring = memoryKeyring({ [`${service}:production`]: "k1" })
+    const store = new Credentials({ configDir: "/tmp/throwaway", keyring, env, warn: () => {} })
+
+    expect(store.read("production")).toEqual({ apiKey: "k1", source: "keyring" })
+  })
+})
+
+describe("a credentials.json from before cli-core", () => {
+  const oldFile = () => {
+    const dir = tempDir()
+    writeFileSync(
+      join(dir, "credentials.json"),
+      JSON.stringify({ production: { apiKey: "k1" }, staging: { secret: "k2" }, other: { note: "kept" } }),
+    )
+    return dir
+  }
+
+  it("still gives up its keys", () => {
+    const store = new Credentials({ configDir: oldFile(), storage: "file", env: {} })
+
+    expect(store.read("production")).toEqual({ apiKey: "k1", source: "file" })
+  })
+
+  it("gains the new field once, owner-only, keeping the old one and every other entry", () => {
+    const dir = oldFile()
+    new Credentials({ configDir: dir, storage: "file", env: {} })
+
+    expect(JSON.parse(readFileSync(join(dir, "credentials.json"), "utf8"))).toEqual({
+      production: { apiKey: "k1", secret: "k1" },
+      staging: { secret: "k2" },
+      other: { note: "kept" },
+    })
+    expect(statSync(join(dir, "credentials.json")).mode & 0o777).toBe(0o600)
   })
 })

@@ -1,7 +1,6 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
-import { writeSecurely } from "@leemour/cli-core"
-import { createRunLogger, type RunLogger } from "../logging/logger.js"
+import { createFileLogger, type FileLogger, writeSecurely } from "@leemour/cli-core"
 
 export type RunStatus = "success" | "failed" | "cancelled" | "dry-run"
 
@@ -43,12 +42,14 @@ export interface StartRunOptions {
   logLevel?: string
   runId?: string
   now?: () => Date
+  /** Told once if `events.jsonl` cannot be written. Never stdout. */
+  warn?: (message: string) => void
 }
 
 export interface Run {
   id: string
   dir: string
-  logger: RunLogger
+  logger: FileLogger
   /**
    * Aborted when the run is cancelled. Passed to `client.execute`, which already turns an abort
    * into `cancelled` — or into `outcome_unknown` for a write that may have reached Braze, which is
@@ -79,10 +80,19 @@ export const startRun = (options: StartRunOptions): Run => {
 
   mkdirSync(dir, { recursive: true, mode: 0o700 })
 
-  const logger = createRunLogger({
+  let told = false
+  const logger = createFileLogger({
     path: join(dir, "events.jsonl"),
     level: options.logLevel,
     base: { run_id: id, command: options.command, profile: options.profile },
+    redact: ["BRAZE_API_KEY"],
+    onError: (error) => {
+      if (told) return
+      told = true
+      options.warn?.(
+        `the run log ${join(dir, "events.jsonl")} cannot be written (${error.message}); carrying on without it`,
+      )
+    },
   })
 
   const metadata: RunMetadata = {

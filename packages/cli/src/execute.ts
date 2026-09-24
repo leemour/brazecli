@@ -1,9 +1,8 @@
-import { createRenderer, processStreams, type Renderer, type Streams } from "@leemour/cli-core"
+import { createRenderer, type FileLogger, processStreams, type Renderer, type Streams } from "@leemour/cli-core"
 import { BrazeClient, BrazeError, type Operation, resolvePath, validateRequest } from "brazecli-core"
 import { runBulk } from "./bulk.js"
 import { assertWriteAllowed } from "./guards.js"
 import { resolveRecordsFormat } from "./input/records.js"
-import type { RunLogger } from "./logging/logger.js"
 import { startRun } from "./runs/run.js"
 import { trackRun } from "./runs/signals.js"
 import { type GlobalFlags, type ResolveOptions, resolveSettings, type Settings } from "./settings.js"
@@ -69,6 +68,7 @@ export const runOperation = async (
     profile: settings.profileName,
     cliVersion: VERSION,
     logLevel: context.env?.BRAZE_LOG ?? process.env.BRAZE_LOG,
+    warn: streams.diagnostic,
   })
 
   // From here until `finish`, a signal finalizes this run instead of killing the process mid-write.
@@ -161,7 +161,7 @@ export const runOperation = async (
   }
 }
 
-const newClient = (settings: Settings, run: { logger: RunLogger }, context: ExecutionContext): BrazeClient =>
+const newClient = (settings: Settings, run: { logger: FileLogger }, context: ExecutionContext): BrazeClient =>
   new BrazeClient({
     endpoint: settings.restEndpoint,
     apiKey: settings.apiKey,

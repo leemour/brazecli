@@ -37,6 +37,14 @@ Source brief: [`REQUIREMENTS.md`](REQUIREMENTS.md) §2–§5, §18–§19, §61.
 
 `cli` depends on `core`. **`core` never depends on `cli`, and never learns that a CLI exists.**
 
+What every command line tool needs comes from [`@leemour/cli-core`](https://www.npmjs.com/package/@leemour/cli-core),
+shared with max-cli: output streams, the renderer, exit codes, the keyring, config loading and the
+atomic write, paths, credentials, the Pino adapter for the run log, the command registry behind
+`braze commands`, shell completion and self-update. `packages/cli` keeps only what is braze's: the
+config schema, the `BRAZE_*` variables, the `brazecli` keyring service, `runs/`, `formulaSafe`,
+and the one-time rewrite of a `credentials.json` from before cli-core. cli-core is Node, so none of
+it may reach `packages/core`.
+
 **One package reaches npm.** `@leemour/brazecli` is published; `packages/core` is private and is inlined
 into `dist/bin/braze.js` at build time by [`scripts/bundle-cli.mjs`](../scripts/bundle-cli.mjs).
 Nobody installing a command line tool has a reason to install its HTTP client separately
@@ -118,7 +126,7 @@ Two separate concepts that must never merge:
 
 - **Logger** — structured records for machines. JSON lines, persisted to a run's `events.jsonl`.
   No ANSI, no colour, no decoration. Core only knows the four-method `Logger` interface; the CLI
-  adapts Pino to it.
+  adapts Pino to it through cli-core's `createFileLogger`.
 - **Renderer** — the terminal surface for a person. Clack, colours, spinners, tables, emoji.
 
 A spinner frame must never reach a log file, and a log record must never reach stdout in JSON

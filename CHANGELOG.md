@@ -6,6 +6,37 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 follow [semantic versioning](https://semver.org/spec/v2.0.0.html) — with `0.x` meaning the command
 surface may still move between minor versions.
 
+## Unreleased
+
+### Added
+
+- **`braze complete zsh|bash|fish|powershell`** prints a completion script. Tab then completes
+  commands, options and your profile names. It reads only the local `config.json` and never
+  reaches Braze.
+- **`braze update`** updates braze with whichever of npm, pnpm or bun installed it; `--check` only
+  looks. It never runs by itself. Once a day, on a terminal, braze says in one line when a newer
+  version exists. JSON modes, CI, `BRAZE_NO_UPDATE_CHECK` and `"updateCheck": false` keep it quiet.
+- **`braze commands --json`** says for each command whether it is `generated` from Braze's
+  collection or `handwritten`, and marks every generated command that writes to Braze with
+  `mutates: true`. `braze api` carries no mark: whether it writes depends on the method you give it.
+
+### Changed
+
+- **`credentials.json` stores each key as `secret` instead of `apiKey`.** An existing file gains
+  `secret` beside `apiKey` the first time braze reads it, keeping its `0600` permissions and every
+  other entry, so an older braze using the same directory still finds its keys. The file is only
+  used on machines without a working keyring.
+- The warning when the keyring is unavailable now names the file the key goes to.
+- The output, config and keyring code now comes from
+  [`@leemour/cli-core`](https://www.npmjs.com/package/@leemour/cli-core). Exit codes, JSON
+  output, keyring entries and file locations are unchanged.
+
+### Fixed
+
+- **A run no longer crashes when its directory is deleted while it runs.** The log file used to
+  throw an unhandled `ENOENT`; now braze warns once and carries on without the log.
+- `BRAZE_API_KEY` is redacted by name in the run log, as a second line of defence.
+
 ## 0.2.0 — 2026-09-23
 
 ### Security

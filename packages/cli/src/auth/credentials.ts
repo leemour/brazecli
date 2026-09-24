@@ -1,10 +1,19 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { type KeyringStore, systemKeyring, writeSecurely } from "@leemour/cli-core"
+import {
+  Credentials as CoreCredentials,
+  type CredentialSource,
+  keyringService as coreKeyringService,
+  type KeyringStore,
+  writeSecurely,
+} from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import type { CredentialStorage } from "../config/file.js"
 
+export type { CredentialSource }
+
 const KEYRING_SERVICE = "brazecli"
+const FILE_NAME = "credentials.json"
 
 /**
  * The keyring service name, scoped to the configuration directory whenever it is not the real one.
@@ -13,14 +22,9 @@ const KEYRING_SERVICE = "brazecli"
  * about which config directory asked for it. So `BRAZE_CONFIG_DIR=/tmp/x braze profile add staging`
  * looks isolated and is not — it overwrites the REAL key for `staging`. That happened here on
  * 2026-09-14 and destroyed two working keys, which cannot be read back out of a keyring.
- *
- * Deriving the service name from the directory makes a throwaway config directory a throwaway
- * keyring namespace too, so the isolation people already assume they have is real.
  */
 export const keyringService = (configDir: string, env: NodeJS.ProcessEnv = process.env): string =>
-  env.BRAZE_CONFIG_DIR === undefined ? KEYRING_SERVICE : `${KEYRING_SERVICE}:${configDir}`
-
-export type CredentialSource = "environment" | "keyring" | "file"
+  coreKeyringService(KEYRING_SERVICE, configDir, env.BRAZE_CONFIG_DIR !== undefined)
 
 export interface StoredCredential {
   apiKey: string
@@ -36,119 +40,97 @@ export interface CredentialsOptions {
   warn?: (message: string) => void
 }
 
-const credentialsPath = (configDir: string) => join(configDir, "credentials.json")
-
-type FileStore = Record<string, { apiKey?: string }>
-
-const readFileStore = (configDir: string): FileStore => {
-  try {
-    return JSON.parse(readFileSync(credentialsPath(configDir), "utf8")) as FileStore
-  } catch {
-    return {}
-  }
-}
-
-const writeFileStore = (configDir: string, store: FileStore): void => {
-  writeSecurely(credentialsPath(configDir), `${JSON.stringify(store, null, 2)}\n`, 0o600)
-}
-
 /**
- * Environment first, then the OS keyring, then a file — the order the brief fixes.
- *
- * `auto` does not probe whether a keyring exists: it attempts the operation, and on failure warns
- * once and falls through. A probe would touch the user's keychain for nothing and could still
- * succeed where the real operation fails.
+ * Environment (`BRAZE_API_KEY`), then the OS keyring, then a file — cli-core's order, which is the
+ * one the brief fixes. The profile name is the keyring account.
  */
 export class Credentials {
-  readonly #configDir: string
-  readonly #storage: CredentialStorage
-  readonly #keyring: KeyringStore
-  readonly #env: NodeJS.ProcessEnv
-  readonly #service: string
-  readonly #warn: (message: string) => void
-  #warned = false
+  readonly #core: CoreCredentials
+  readonly #keyringOnly: boolean
 
   constructor(options: CredentialsOptions) {
-    this.#configDir = options.configDir
-    this.#storage = options.storage ?? "auto"
-    this.#keyring = options.keyring ?? systemKeyring
-    this.#env = options.env ?? process.env
-    this.#warn = options.warn ?? ((message) => process.stderr.write(`${message}\n`))
-    this.#service = keyringService(options.configDir, this.#env)
+    const env = options.env ?? process.env
+    migrateFile(options.configDir, options.warn ?? ((message) => process.stderr.write(`${message}\n`)))
+    this.#keyringOnly = options.storage === "keyring"
+    this.#core = new CoreCredentials({
+      configDir: options.configDir,
+      service: KEYRING_SERVICE,
+      isolated: env.BRAZE_CONFIG_DIR !== undefined,
+      envVar: "BRAZE_API_KEY",
+      fileName: FILE_NAME,
+      ...(options.storage ? { storage: options.storage } : {}),
+      ...(options.keyring ? { keyring: options.keyring } : {}),
+      env,
+      ...(options.warn ? { warn: options.warn } : {}),
+    })
   }
 
   read(profile: string): StoredCredential | undefined {
-    const fromEnv = this.#env.BRAZE_API_KEY?.trim()
-    if (fromEnv) return { apiKey: fromEnv, source: "environment" }
-
-    if (this.#storage !== "file") {
-      const fromKeyring = this.#tryKeyring(() => this.#keyring.get(this.#service, profile))
-      if (fromKeyring) return { apiKey: fromKeyring, source: "keyring" }
-    }
-
-    const fromFile = readFileStore(this.#configDir)[profile]?.apiKey
-    return fromFile ? { apiKey: fromFile, source: "file" } : undefined
+    const stored = this.#guard(() => this.#core.read(profile))
+    return stored && { apiKey: stored.secret, source: stored.source }
   }
 
   write(profile: string, apiKey: string): CredentialSource {
-    if (this.#storage !== "file") {
-      const stored = this.#tryKeyring(() => {
-        this.#keyring.set(this.#service, profile, apiKey)
-        return true
-      })
-      if (stored) return "keyring"
-    }
-
-    const store = readFileStore(this.#configDir)
-    store[profile] = { apiKey }
-    writeFileStore(this.#configDir, store)
-    return "file"
+    return this.#guard(() => this.#core.write(profile, apiKey))
   }
 
   remove(profile: string): CredentialSource[] {
-    const removed: CredentialSource[] = []
-
-    if (this.#storage !== "file" && this.#tryKeyring(() => this.#keyring.delete(this.#service, profile))) {
-      removed.push("keyring")
-    }
-
-    const store = readFileStore(this.#configDir)
-    if (store[profile] !== undefined) {
-      delete store[profile]
-      writeFileStore(this.#configDir, store)
-      removed.push("file")
-    }
-
-    return removed
+    return this.#guard(() => this.#core.remove(profile))
   }
 
-  #tryKeyring<T>(operation: () => T): T | undefined {
-    // `keyring` was asked for explicitly, so there is no fallback to warn about — but the failure
-    // is still the configuration being wrong for this machine, not an unknown crash (`CLI-12`).
-    if (this.#storage === "keyring") {
-      try {
-        return operation()
-      } catch (error) {
-        throw new BrazeError(
-          "configuration_error",
-          `credentialStorage is "keyring" and the OS keyring is unavailable (${
-            error instanceof Error ? error.message : String(error)
-          })`,
-        )
-      }
-    }
-
+  /**
+   * `keyring` was asked for explicitly, so cli-core lets the failure through — but it is still the
+   * configuration being wrong for this machine, not an unknown crash (`CLI-12`: exit 3).
+   */
+  #guard<T>(operation: () => T): T {
+    if (!this.#keyringOnly) return operation()
     try {
       return operation()
     } catch (error) {
-      if (!this.#warned) {
-        this.#warned = true
-        this.#warn(
-          `the OS keyring is unavailable (${error instanceof Error ? error.message : String(error)}); ` +
-            "falling back to a file in the config directory",
-        )
-      }
-      return undefined
+      throw new BrazeError(
+        "configuration_error",
+        `credentialStorage is "keyring" and the OS keyring is unavailable (${
+          error instanceof Error ? error.message : String(error)
+        })`,
+      )
     }
+  }
+}
+
+/**
+ * braze wrote `{ "<profile>": { "apiKey": … } }`; cli-core reads `secret`. Rewritten once, here,
+ * rather than tolerated forever in cli-core — and before the first read, or every key saved on a
+ * machine without a keyring (CI, a container) looks gone after the upgrade. `apiKey` is kept so an
+ * older braze sharing the directory still finds the key.
+ */
+const migrateFile = (configDir: string, warn: (message: string) => void): void => {
+  const path = join(configDir, FILE_NAME)
+  let store: unknown
+  try {
+    store = JSON.parse(readFileSync(path, "utf8"))
+  } catch {
+    return
+  }
+  if (typeof store !== "object" || store === null) return
+
+  let changed = false
+  for (const entry of Object.values(store as Record<string, unknown>)) {
+    if (typeof entry !== "object" || entry === null) continue
+    const fields = entry as Record<string, unknown>
+    if (typeof fields.apiKey === "string" && fields.secret === undefined) {
+      fields.secret = fields.apiKey
+      changed = true
+    }
+  }
+  if (!changed) return
+
+  try {
+    writeSecurely(path, `${JSON.stringify(store, null, 2)}\n`, 0o600)
+  } catch (error) {
+    warn(
+      `${path} is in the old format and cannot be rewritten (${
+        error instanceof Error ? error.message : String(error)
+      }); the keys in it cannot be read until it can`,
+    )
   }
 }
