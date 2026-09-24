@@ -2,7 +2,6 @@ import { spawnSync } from "node:child_process"
 import { realpathSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
-import { resolvePaths } from "@leemour/cli-core"
 import type { FetchLike } from "@leemour/cli-core/http"
 import {
   checkIsDue,
@@ -15,7 +14,7 @@ import {
   writeUpdateState,
 } from "@leemour/cli-core/update"
 import { emptyConfig, loadConfig } from "./config/file.js"
-import { resolvePaths as brazePaths } from "./config/paths.js"
+import { resolvePaths } from "./config/paths.js"
 import { type GlobalFlags, resolveOutputFormat } from "./settings.js"
 import { VERSION } from "./version.js"
 
@@ -57,8 +56,7 @@ export const runUpdate = (argv: string[], environment: UpdateEnvironment = {}): 
   return status ?? 1
 }
 
-const statePath = (env: NodeJS.ProcessEnv) =>
-  join(resolvePaths({ appName: "brazecli", prefix: "BRAZE", env }).state, "update-check.json")
+const statePath = (env: NodeJS.ProcessEnv) => join(resolvePaths(env).state, "update-check.json")
 
 /**
  * Only what decides the output mode. Commander has not run yet, and must not run twice.
@@ -90,7 +88,7 @@ export const updateNotice = async (
 
     let config = emptyConfig()
     try {
-      config = loadConfig(brazePaths(env).config)
+      config = loadConfig(resolvePaths(env).config)
     } catch {
       // The command itself reports an unreadable config; the notice stays silent.
     }
