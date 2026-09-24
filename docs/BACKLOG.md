@@ -66,4 +66,3 @@ Nothing is blocked on the owner.
 | Number | Task | P |
 |---|---|---|
 | `BULK-13` | ⏸️ Bulk input as one big JSON array. Streaming it means owning a hand-rolled incremental scanner; JSONL and CSV cover every stated use. Build it when somebody has an array they cannot convert | P3 |
-| `OPS-6` | ⏸️ Publish from CI. Ruled out for now (`NEED-49`) — it would need a long-lived npm token to save one command a few times a year. Check npm's trusted publishing over OIDC first; it stores no token | P3 |
