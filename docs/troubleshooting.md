@@ -32,7 +32,7 @@ Braze maps dashboard URLs to REST endpoints in
 Braze scopes API keys per endpoint group. The key is valid and does not carry that permission —
 `users.delete`, `campaigns.list` and so on are granted separately in the Braze dashboard.
 
-## "the OS keyring is unavailable … falling back to a file"
+## "the OS keyring is unavailable … storing in …/credentials.json instead"
 
 Exactly what it says: the key was written to `credentials.json` in the config directory, with
 permissions `0600`. It happens on a headless Linux box with no Secret Service running, in some

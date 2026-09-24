@@ -1,7 +1,7 @@
-import { existsSync, mkdtempSync, readFileSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { findRun, listRuns, startRun } from "./run.js"
 
 // The control character is the point: these assert that no ANSI escape reaches a machine
@@ -59,6 +59,27 @@ describe("a run directory", () => {
     const log = readFileSync(join(run.dir, "events.jsonl"), "utf8")
     expect(log).toContain("[redacted]")
     expect(log).not.toContain("secret-key")
+  })
+
+  it("redacts BRAZE_API_KEY, which only braze knows is a secret", async () => {
+    const run = start(runsDir())
+    run.logger.info({ event: "env", env: { BRAZE_API_KEY: "secret-key" } })
+    await run.finish("success")
+
+    expect(readFileSync(join(run.dir, "events.jsonl"), "utf8")).not.toContain("secret-key")
+  })
+
+  it("warns once and carries on when its directory disappears mid-run", async () => {
+    const warn = vi.fn()
+    const run = start(runsDir(), { warn })
+    rmSync(run.dir, { recursive: true })
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    run.logger.info({ event: "http.response", status: 200 })
+    await run.finish("success")
+
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0]?.[0]).toContain("events.jsonl")
   })
 
   it("keeps the whole log on disk after a failed run is closed", async () => {
