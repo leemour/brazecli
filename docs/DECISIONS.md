@@ -62,14 +62,21 @@ product requirement: the constraint is kept as an internal discipline, not as a 
 not before.
 
 **NEED-49 · Release from CI or from a maintainer's machine?**
-**From the machine.** «let's create a gh release and tag properly what we released in npm, we just
+**Overturned 2026-09-24: from CI, through npm's trusted publishing.** The owner chose it for all
+three packages that share `cli-core` («3 A», `NEED-146` in max-cli's research journal). Trusted
+publishing stores no npm token anywhere — the cost that ruled CI out below no longer exists — and
+npm attaches provenance. `scripts/release.sh` starts `.github/workflows/release.yml`;
+`--local` keeps the path below as a fallback. The order — publish, then tag, then release — is
+unchanged. `@leemour/cli-core` 0.1.2 and `@leemour/max-cli` 0.5.0 were released this way first.
+
+~~**From the machine.** «let's create a gh release and tag properly what we released in npm, we just
 release not from github but from local machine». The tag-triggered workflow was deleted: it would
 have needed a long-lived npm token in the repository secrets to save one command run a few times a
 year, and an unarmed one turns every tag into a failed run.
 
 The order matters and is written down in [`releasing.md`](releasing.md): publish first, then tag
 the commit that was published, then write the GitHub release. A tag made before the publish records
-an intention; a tag made after records a fact.
+an intention; a tag made after records a fact.~~
 
 **NEED-5 · Which Braze cluster?**
 **`https://rest.fra-01.braze.eu`.** The owner read it from the dashboard. Measured, not assumed:
@@ -324,7 +331,8 @@ on that Braze workspace.** Braze grants permissions only through the dashboard, 
 REST API, so this was never ours to do. The two profiles stay — see `NEED-60`.
 
 **NEED-46 · Put `NPM_TOKEN` in the repository secrets so a release workflow can run?**
-**Moot — `NEED-49` removed the workflow.** Releases are made from a maintainer's machine, so no
+**Still no — trusted publishing needs no token at all** (`NEED-49`, overturned 2026-09-24).
+Earlier: **Moot — `NEED-49` removed the workflow.** Releases are made from a maintainer's machine, so no
 token is stored anywhere but the owner's keyring. If that is ever revisited it is `OPS-6`, and
 npm's trusted publishing over OIDC should be checked first because it stores no token at all.
 

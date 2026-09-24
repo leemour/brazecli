@@ -1,0 +1,85 @@
+name: Release
+
+# Started by scripts/release.sh. npm trusts this file by name (trusted publishing), so there is no
+# npm token anywhere in this repository and renaming the file breaks publishing until npm is told.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+          # npm's own guidance for release builds: no cache that could carry credentials in.
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@v2
+
+      - name: version not yet on npm, and a changelog section for it
+        run: |
+          version=$(node -p 'require("./packages/cli/package.json").version')
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          if npm view "@leemour/brazecli@$version" version --prefer-online >/dev/null 2>&1; then
+            echo "::error::$version is already on npm — a version can never be republished"
+            exit 1
+          fi
+          grep -q "^## $version " CHANGELOG.md || { echo "::error::CHANGELOG.md has no '## $version' heading"; exit 1; }
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm portability:core
+      - run: pnpm smoke:bun
+      - run: pnpm catalog:check
+      - run: pnpm docs:check
+      - run: pnpm version:check
+
+      # pnpm packs because it rewrites `workspace:*`; npm publishes because pnpm cannot use npm's
+      # trusted publishing.
+      - name: pack
+        run: |
+          mkdir -p "$RUNNER_TEMP/pack"
+          pnpm --filter @leemour/brazecli pack --pack-destination "$RUNNER_TEMP/pack"
+      - run: npm publish "$RUNNER_TEMP"/pack/*.tgz --access public
+
+      - name: wait for npm to show the version
+        run: |
+          for _ in $(seq 36); do
+            npm view "@leemour/brazecli@$VERSION" version --prefer-online >/dev/null 2>&1 && exit 0
+            sleep 5
+          done
+          echo "::error::npm does not show $VERSION after three minutes — not tagging"
+          exit 1
+
+      # The first bullet's bold lead-in is the release title (docs/releasing.md).
+      - name: tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="$RUNNER_TEMP/notes.md"
+          awk "/^## $VERSION /{f=1;next} /^## /{f=0} f" CHANGELOG.md > "$notes"
+          summary=$(grep -m1 -oP '^- \*\*\K[^*]+' "$notes" | sed 's/[.:]$//')
+          [ -n "$summary" ] || { echo "::error::no bold lead-in on the first bullet under '## $VERSION'"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "v$VERSION — $summary"
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" --title "v$VERSION — $summary" --notes-file "$notes"
