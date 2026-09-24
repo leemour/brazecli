@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { run } from "../program.js"
 import { installSignalHandlers } from "../runs/signals.js"
+import { updateNotice } from "../update.js"
 
 // Here and not in `run()`: the tests call that hundreds of times, and a listener per call
 // accumulates until Node warns about a leak.
@@ -16,4 +17,9 @@ for (const stream of [process.stdout, process.stderr]) {
   })
 }
 
-process.exitCode = await run(process.argv.slice(2))
+const argv = process.argv.slice(2)
+// Here and not in `run()`, so no test ever reaches npm.
+const notice = updateNotice(argv)
+process.exitCode = await run(argv)
+const line = await notice
+if (line) process.stderr.write(`${line}\n`)

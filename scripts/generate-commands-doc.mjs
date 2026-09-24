@@ -17,8 +17,9 @@
  * avoid.
  */
 import { readFileSync, writeFileSync } from "node:fs"
+import { createRequire } from "node:module"
 import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 
@@ -32,7 +33,9 @@ if (outFlag !== -1 && process.argv[outFlag + 1] === undefined) {
 const OUT = outFlag === -1 ? join(root, "docs/commands.md") : process.argv[outFlag + 1]
 
 const { buildProgram } = await import(join(root, "packages/cli/dist/program.js"))
-const { describeProgram } = await import(join(root, "packages/cli/dist/commands/commands.js"))
+// Resolved from the CLI package: cli-core is its dependency, not the workspace root's.
+const registry = createRequire(join(root, "packages/cli/package.json")).resolve("@leemour/cli-core/commands")
+const { describeProgram } = await import(pathToFileURL(registry).href)
 
 const check = process.argv.includes("--check")
 
@@ -75,7 +78,7 @@ function render(tree, program) {
     "",
     "**A command that talks to Braze names its profile as the first word** — `braze staging",
     "campaigns list`. There is no default profile, deliberately (`NEED-25`). The commands that",
-    "never reach Braze — `profile`, `runs`, `commands`, `schema`, `skill` — take none.",
+    "never reach Braze — `profile`, `runs`, `commands`, `schema`, `skill`, `update` — take none.",
     "",
     "## Global options",
     "",

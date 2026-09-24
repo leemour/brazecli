@@ -58,12 +58,34 @@ In `package.json`:
 ## Updating
 
 ```sh
+braze update            # with whichever of npm, pnpm or bun installed it
+braze update --check    # only say whether a newer version exists
+```
+
+`braze update` never runs by itself. Once a day, on a terminal, `braze` asks npm whether a newer
+version exists and says so in one line on stderr. It stays silent in JSON and JSONL modes, in CI,
+and when `NO_UPDATE_NOTIFIER` or `BRAZE_NO_UPDATE_CHECK` is set; `"updateCheck": false` in
+`config.json` turns it off for good. By hand, the same thing is:
+
+```sh
 npm install -g @leemour/brazecli@latest
 pnpm add -g @leemour/brazecli@latest
 ```
 
 `braze --version` prints what is installed. The version also travels to Braze in the `User-Agent`
 of every request and into every run's `run.json`, so a support conversation can name it exactly.
+
+## Shell completion
+
+Tab completes commands, options and your profile names in zsh, bash, fish and PowerShell:
+
+```sh
+echo 'source <(braze complete zsh)' >> ~/.zshrc
+echo 'source <(braze complete bash)' >> ~/.bashrc
+braze complete fish > ~/.config/fish/completions/braze.fish
+```
+
+A Tab reads the local `config.json` for profile names and nothing else. It never reaches Braze.
 
 ## From a clone
 
@@ -98,6 +120,7 @@ is welcome, working or not.
 |---|---|---|
 | profiles | `~/Library/Preferences/brazecli/config.json` | `~/.config/brazecli/config.json` |
 | run artifacts | `~/Library/Application Support/brazecli/runs/` | `~/.local/share/brazecli/runs/` |
+| the last update check | `~/Library/Application Support/brazecli/update-check.json` | `~/.local/share/brazecli/update-check.json` |
 | the API key | Keychain | Secret Service (GNOME Keyring, KWallet) |
 
 `braze --help` prints the resolved paths for the machine it is running on. Both directories can be

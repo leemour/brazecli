@@ -12,14 +12,17 @@ import { Command, Option } from "commander"
 import { apiCommand } from "./commands/api.js"
 import { catalogCommands } from "./commands/catalog.js"
 import { commandsCommand } from "./commands/commands.js"
+import { completeCommand } from "./commands/complete.js"
 import { profileCommand } from "./commands/profile.js"
 import { runsCommand } from "./commands/runs.js"
 import { schemaCommand } from "./commands/schema.js"
 import { skillCommand } from "./commands/skill.js"
+import { selfUpdateCommand } from "./commands/update.js"
 import { emptyConfig, loadConfig, OUTPUT_FORMATS } from "./config/file.js"
 import { resolvePaths } from "./config/paths.js"
 import { DOCUMENTATION, firstProfileHint } from "./documentation.js"
 import { type GlobalFlags, resolveOutputFormat } from "./settings.js"
+import type { UpdateEnvironment } from "./update.js"
 import { VERSION } from "./version.js"
 
 export interface ProgramOptions {
@@ -33,6 +36,8 @@ export interface ProgramOptions {
   /** `skill install` writes into these; injected so a test never touches the real home directory. */
   home?: string
   cwd?: string
+  /** npm and the package manager, as `braze update` reaches them. */
+  update?: UpdateEnvironment
 }
 
 export const buildProgram = (options: ProgramOptions = {}): Command => {
@@ -65,6 +70,8 @@ export const buildProgram = (options: ProgramOptions = {}): Command => {
   program.addCommand(commandsCommand(options))
   program.addCommand(schemaCommand(options))
   program.addCommand(skillCommand(options))
+  program.addCommand(selfUpdateCommand(options))
+  program.addCommand(completeCommand(options), { hidden: true })
 
   // §13: registered in a loop, never as a hundred nearly identical files. After the handwritten
   // ones, so a name collision would be visible rather than silently shadowing `profile` or `runs`.
