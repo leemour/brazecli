@@ -150,12 +150,12 @@ describe("a credentials.json from before cli-core", () => {
     expect(store.read("production")).toEqual({ apiKey: "k1", source: "file" })
   })
 
-  it("is rewritten once in the new shape, owner-only, keeping every other entry", () => {
+  it("gains the new field once, owner-only, keeping the old one and every other entry", () => {
     const dir = oldFile()
     new Credentials({ configDir: dir, storage: "file", env: {} })
 
     expect(JSON.parse(readFileSync(join(dir, "credentials.json"), "utf8"))).toEqual({
-      production: { secret: "k1" },
+      production: { apiKey: "k1", secret: "k1" },
       staging: { secret: "k2" },
       other: { note: "kept" },
     })

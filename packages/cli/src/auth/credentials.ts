@@ -100,7 +100,8 @@ export class Credentials {
 /**
  * braze wrote `{ "<profile>": { "apiKey": … } }`; cli-core reads `secret`. Rewritten once, here,
  * rather than tolerated forever in cli-core — and before the first read, or every key saved on a
- * machine without a keyring (CI, a container) looks gone after the upgrade.
+ * machine without a keyring (CI, a container) looks gone after the upgrade. `apiKey` is kept so an
+ * older braze sharing the directory still finds the key.
  */
 const migrateFile = (configDir: string, warn: (message: string) => void): void => {
   const path = join(configDir, FILE_NAME)
@@ -118,7 +119,6 @@ const migrateFile = (configDir: string, warn: (message: string) => void): void =
     const fields = entry as Record<string, unknown>
     if (typeof fields.apiKey === "string" && fields.secret === undefined) {
       fields.secret = fields.apiKey
-      delete fields.apiKey
       changed = true
     }
   }

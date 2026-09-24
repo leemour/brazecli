@@ -17,13 +17,15 @@ surface may still move between minor versions.
   looks. It never runs by itself. Once a day, on a terminal, braze says in one line when a newer
   version exists. JSON modes, CI, `BRAZE_NO_UPDATE_CHECK` and `"updateCheck": false` keep it quiet.
 - **`braze commands --json`** says for each command whether it is `generated` from Braze's
-  collection or `handwritten`, and marks a command that writes to Braze with `mutates: true`.
+  collection or `handwritten`, and marks every generated command that writes to Braze with
+  `mutates: true`. `braze api` carries no mark: whether it writes depends on the method you give it.
 
 ### Changed
 
-- **`credentials.json` stores each key as `secret` instead of `apiKey`.** An existing file is
-  rewritten once, the first time braze reads it, keeping its `0600` permissions and every other
-  entry. It is only used on machines without a working keyring.
+- **`credentials.json` stores each key as `secret` instead of `apiKey`.** An existing file gains
+  `secret` beside `apiKey` the first time braze reads it, keeping its `0600` permissions and every
+  other entry, so an older braze using the same directory still finds its keys. The file is only
+  used on machines without a working keyring.
 - The warning when the keyring is unavailable now names the file the key goes to.
 - The output, config and keyring code now comes from
   [`@leemour/cli-core`](https://www.npmjs.com/package/@leemour/cli-core). Exit codes, JSON
