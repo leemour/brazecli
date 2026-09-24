@@ -22,6 +22,7 @@ const RESERVED = [
   "skill",
   "update",
   "complete",
+  "doctor",
   "help",
   ...new Set(catalog.map((o) => o.command[0])),
 ]

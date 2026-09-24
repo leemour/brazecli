@@ -13,6 +13,7 @@ import { apiCommand } from "./commands/api.js"
 import { catalogCommands } from "./commands/catalog.js"
 import { commandsCommand } from "./commands/commands.js"
 import { completeCommand } from "./commands/complete.js"
+import { doctorCommand } from "./commands/doctor.js"
 import { profileCommand } from "./commands/profile.js"
 import { runsCommand } from "./commands/runs.js"
 import { schemaCommand } from "./commands/schema.js"
@@ -71,6 +72,7 @@ export const buildProgram = (options: ProgramOptions = {}): Command => {
   program.addCommand(commandsCommand(options))
   program.addCommand(schemaCommand(options))
   program.addCommand(skillCommand(options))
+  program.addCommand(doctorCommand(options))
   program.addCommand(selfUpdateCommand(options))
   program.addCommand(completeCommand(options), { hidden: true })
 

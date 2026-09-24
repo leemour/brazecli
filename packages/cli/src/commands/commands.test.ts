@@ -103,7 +103,7 @@ describe("braze commands", () => {
       documentation: "https://www.braze.com/docs/api/home",
     })
     // Leaves only: `campaigns` is scaffolding, `campaigns list` is a thing you can run.
-    expect(surface.endpoints.runnableCommands).toBe(108)
+    expect(surface.endpoints.runnableCommands).toBe(109)
     expect(surface.endpoints.escapeHatch).toContain("braze api")
   })
 
