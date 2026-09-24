@@ -1,10 +1,9 @@
-import { createRenderer, processStreams, type Streams } from "@leemour/cli-core"
+import type { Streams } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import { Command } from "commander"
-import { emptyConfig, loadConfig } from "../config/file.js"
 import { resolvePaths } from "../config/paths.js"
+import { outputFor } from "../output/context.js"
 import { expiredRuns, findRun, listRuns, removeRun } from "../runs/run.js"
-import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
 
 export interface RunsContext {
   env?: NodeJS.ProcessEnv
@@ -20,28 +19,11 @@ export const runsCommand = (context: RunsContext = {}): Command => {
   const command = new Command("runs").description("inspect what past invocations did")
 
   const setup = (parent: Command) => {
-    const env = context.env ?? process.env
-    const globals = parent.parent?.parent?.opts<GlobalFlags>() ?? parent.parent?.opts<GlobalFlags>() ?? {}
+    // A broken config must not stop someone reading the logs that would explain it.
+    const { env, globals, streams, renderer } = outputFor(parent, context)
     const paths = resolvePaths(env)
     if (globals.runsDir) paths.runs = globals.runsDir
-
-    let config = emptyConfig()
-    try {
-      config = loadConfig(paths.config)
-    } catch {
-      // A broken config must not stop someone reading the logs that would explain it.
-    }
-
-    const streams = context.streams ?? processStreams
-    return {
-      paths,
-      streams,
-      renderer: createRenderer({
-        format: resolveOutputFormat(globals, env, config, context.isTty ?? process.stdout.isTTY === true),
-        color: resolveColor(globals, env, config, context.isTty ?? process.stderr.isTTY === true),
-        streams,
-      }),
-    }
+    return { paths, streams, renderer }
   }
 
   command

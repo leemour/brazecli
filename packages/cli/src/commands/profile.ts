@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs"
-import { createRenderer, type KeyringStore, processStreams, type Streams } from "@leemour/cli-core"
+import { type KeyringStore, processStreams, type Streams } from "@leemour/cli-core"
 import { BrazeError, catalog } from "brazecli-core"
 import { Command } from "commander"
 import { Credentials } from "../auth/credentials.js"
 import { loadConfig, saveConfig } from "../config/file.js"
 import { resolvePaths } from "../config/paths.js"
-import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
+import { outputFor } from "../output/context.js"
 import { verifyCommand } from "./verify.js"
 
 /**
@@ -42,12 +42,11 @@ export interface ProfileContext {
  * The output format does not depend on a profile, so it is resolved from the same three functions
  * everything else uses, and `NEED-1` holds here too (BUG-17).
  */
-const context = (options: ProfileContext, self?: Command) => {
+const context = (options: ProfileContext, self: Command) => {
   const env = options.env ?? process.env
   const paths = resolvePaths(env)
   const config = loadConfig(paths.config)
   const streams = options.streams ?? processStreams
-  const flags = self?.parent?.parent?.opts<GlobalFlags>() ?? {}
 
   const credentials = new Credentials({
     configDir: paths.config,
@@ -57,11 +56,7 @@ const context = (options: ProfileContext, self?: Command) => {
     warn: streams.diagnostic,
   })
 
-  const renderer = createRenderer({
-    format: resolveOutputFormat(flags, env, config, options.isTty ?? process.stdout.isTTY === true),
-    color: resolveColor(flags, env, config, options.isTty ?? process.stderr.isTTY === true),
-    streams,
-  })
+  const { renderer } = outputFor(self, options, config)
 
   return { env, paths, config, streams, credentials, renderer }
 }

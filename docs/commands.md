@@ -20,6 +20,7 @@ never reach Braze — `profile`, `runs`, `commands`, `schema`, `skill`, `update`
 | `--json` | no | one deterministic JSON value on stdout, whatever the terminal is |
 | `--output <format>` | no | output mode |
 | `--no-color` | no | never emit ANSI colour |
+| `--quiet` | no | no notes, successes or warnings on stderr; results and failures are unchanged |
 | `--dry-run` | no | resolve, validate and count, but send nothing |
 | `--confirm` | no | required before any write; never an interactive prompt |
 | `--paginate` | no | walk the pages of a paged read and return them as one value |

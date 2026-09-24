@@ -2,12 +2,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { createRenderer, processStreams, type Streams } from "@leemour/cli-core"
+import type { Streams } from "@leemour/cli-core"
 import { BrazeError } from "brazecli-core"
 import { Command } from "commander"
-import { emptyConfig, loadConfig } from "../config/file.js"
-import { resolvePaths } from "../config/paths.js"
-import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
+import { outputFor } from "../output/context.js"
 
 export interface SkillContext {
   env?: NodeJS.ProcessEnv
@@ -78,22 +76,7 @@ export const skillCommand = (context: SkillContext = {}): Command => {
       this: Command,
       flags: { claude?: boolean; codex?: boolean; hermes?: boolean; project?: boolean; dir?: string },
     ) {
-      const env = context.env ?? process.env
-      const globals = this.parent?.parent?.opts<GlobalFlags>() ?? {}
-      const streams = context.streams ?? processStreams
-
-      let config = emptyConfig()
-      try {
-        config = loadConfig(resolvePaths(env).config)
-      } catch {
-        // Installing a skill file must not depend on a configuration it never reads.
-      }
-
-      const renderer = createRenderer({
-        format: resolveOutputFormat(globals, env, config, context.isTty ?? process.stdout.isTTY === true),
-        color: resolveColor(globals, env, config, context.isTty ?? process.stderr.isTTY === true),
-        streams,
-      })
+      const { renderer } = outputFor(this, context)
 
       const home = context.home ?? homedir()
       const cwd = context.cwd ?? process.cwd()

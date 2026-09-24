@@ -8,6 +8,11 @@ surface may still move between minor versions.
 
 ## Unreleased
 
+### Added
+
+- **`--quiet` keeps stderr to failures only.** Notes, successes, warnings and the daily update
+  line are dropped; the result on stdout is unchanged.
+
 ### Fixed
 
 - **A mistyped command line is now a `validation_error`, exit 2, and JSON in a machine mode.** An

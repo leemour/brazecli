@@ -9,6 +9,7 @@ import { firstProfileHint } from "./documentation.js"
 export interface GlobalFlags {
   profile?: string
   json?: boolean
+  quiet?: boolean
   output?: OutputFormat
   color?: boolean
   runsDir?: string
@@ -38,6 +39,7 @@ export interface Settings {
   apiKeySource: CredentialSource
   outputFormat: RenderFormat
   color: boolean
+  quiet: boolean
   timeoutMs: number | undefined
   retries: number | undefined
   dryRun: boolean
@@ -139,6 +141,7 @@ export const resolveSettings = (flags: GlobalFlags, options: ResolveOptions = {}
     interactive: options.isTty ?? process.stderr.isTTY === true,
     outputFormat: resolveOutputFormat(flags, env, config, options.isTty ?? process.stdout.isTTY === true),
     color: resolveColor(flags, env, config, options.isTty ?? process.stderr.isTTY === true),
+    quiet: flags.quiet === true,
     timeoutMs: flags.timeout ?? config.http.timeoutMs,
     retries: flags.retries ?? config.http.retries,
     dryRun: flags.dryRun === true,

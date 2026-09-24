@@ -1,10 +1,8 @@
-import { createRenderer, processStreams, type Streams } from "@leemour/cli-core"
+import type { Streams } from "@leemour/cli-core"
 import { isNewer, updateCommand } from "@leemour/cli-core/update"
 import { BrazeError } from "brazecli-core"
 import { Command } from "commander"
-import { emptyConfig, loadConfig } from "../config/file.js"
-import { resolvePaths } from "../config/paths.js"
-import { type GlobalFlags, resolveColor, resolveOutputFormat } from "../settings.js"
+import { outputFor } from "../output/context.js"
 import { installer, latest, PACKAGE, runUpdate, type UpdateEnvironment } from "../update.js"
 import { VERSION } from "../version.js"
 
@@ -30,20 +28,7 @@ export const selfUpdateCommand = (context: UpdateContext = {}): Command =>
     .description("update braze with the package manager that installed it; --check only looks")
     .option("--check", "say whether a newer version exists, and install nothing")
     .action(async function (this: Command, { check }: { check?: boolean }) {
-      const env = context.env ?? process.env
-      const globals = (this.parent ?? this).opts<GlobalFlags>()
-      let config = emptyConfig()
-      try {
-        config = loadConfig(resolvePaths(env).config)
-      } catch {
-        // Updating must not depend on a configuration being readable — it may be how that gets fixed.
-      }
-      const format = resolveOutputFormat(globals, env, config, context.isTty ?? process.stdout.isTTY === true)
-      const renderer = createRenderer({
-        format,
-        color: resolveColor(globals, env, config, context.isTty ?? process.stderr.isTTY === true),
-        streams: context.streams ?? processStreams,
-      })
+      const { format, renderer } = outputFor(this, context)
 
       const environment = context.update ?? {}
       const found = installer(environment)
