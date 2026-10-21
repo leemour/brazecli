@@ -1,5 +1,6 @@
 import * as v from "valibot"
 import { namesAUser, primaryIdentifierCount } from "../identity.js"
+import { isZoneless } from "../zone.js"
 
 /**
  * Handwritten request schemas, keyed by `Operation.id`. An operation appears here **only** if it
@@ -14,6 +15,8 @@ import { namesAUser, primaryIdentifierCount } from "../identity.js"
  * has no way to overrule it except `braze api`. Where a page leaves a rule ambiguous, the
  * operation stays `generated` and this file says why — a smaller strict set that is right beats a
  * fuller one that guesses.
+ *
+ * One rule is ours, not Braze's: an event or purchase `time` must carry its zone (see `zoned`).
  *
  * What is deliberately NOT here, and why:
  *
@@ -42,6 +45,13 @@ export const schemas: Readonly<Record<string, v.GenericSchema>> = {
     v.check(
       (body) => total(body) <= 75,
       "Braze accepts at most 75 objects per request, counted across attributes, events and purchases together",
+    ),
+    v.check(
+      (body) =>
+        [...(body.events ?? []), ...(body.purchases ?? [])].every(
+          (item) => typeof item.time !== "string" || !isZoneless(item.time),
+        ),
+      "an event or purchase time has no zone — end it with Z or an offset such as +02:00, since Braze does not document which zone it would assume",
     ),
   ),
 
@@ -119,7 +129,10 @@ export const recordSchemas: Readonly<Record<string, Readonly<Record<string, v.Ge
       namesOneUser("an event"),
       v.looseObject({
         name: v.string("an event record needs a name — Braze documents it as required"),
-        time: v.string("an event record needs a time — Braze documents it as a required ISO 8601 string"),
+        time: v.pipe(
+          v.string("an event record needs a time — Braze documents it as a required ISO 8601 string"),
+          zoned("an event"),
+        ),
       }),
     ]),
 
@@ -136,10 +149,26 @@ export const recordSchemas: Readonly<Record<string, Readonly<Record<string, v.Ge
         product_id: v.string("a purchase record needs a product_id — Braze documents it as required"),
         currency: v.string("a purchase record needs a currency — Braze documents it as a required ISO 4217 code"),
         price: v.number("a purchase record needs a price — Braze documents it as a required number"),
-        time: v.string("a purchase record needs a time — Braze documents it as a required ISO 8601 string"),
+        time: v.pipe(
+          v.string("a purchase record needs a time — Braze documents it as a required ISO 8601 string"),
+          zoned("a purchase"),
+        ),
       }),
     ]),
   },
+}
+
+/**
+ * Not a Braze rule but ours: a time is exchanged in UTC or with its offset. The event and purchase
+ * pages (above) do not say which zone a `time` without one is read in, so a file exported from
+ * another system's local clock would be shifted by an unknown amount, and Braze keeps the event.
+ * Refused rather than read in this computer's zone: the file's zone is not this computer's to know.
+ */
+function zoned(what: string) {
+  return v.check(
+    (time: string) => !isZoneless(time),
+    `${what} time has no zone — end it with Z or an offset such as +02:00, since Braze does not document which zone it would assume`,
+  )
 }
 
 /**

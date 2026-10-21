@@ -205,6 +205,22 @@ describe("checking one record of a batch", () => {
     expect(refusal("purchases", { ...purchase, currency: undefined })).toContain("currency")
   })
 
+  it("refuses an event or purchase time with no zone, since Braze does not say which one it would assume", () => {
+    const event = { external_id: "u1", name: "rented_movie" }
+    const purchase = { external_id: "u1", product_id: "p", currency: "EUR", price: 9.99 }
+
+    expect(refusal("events", { ...event, time: "2026-09-15T10:00:00" })).toContain("no zone")
+    expect(refusal("purchases", { ...purchase, time: "2026-09-15" })).toContain("no zone")
+    expect(refusal("events", { ...event, time: "2026-09-15T10:00:00+02:00" })).toBeUndefined()
+    expect(refusal("events", { ...event, time: "2013-07-16T19:20:30:000+0100" })).toBeUndefined()
+  })
+
+  it("refuses a zone-less event time in a request body too", () => {
+    const body = { events: [{ external_id: "u1", name: "rented_movie", time: "2026-09-15T10:00:00" }] }
+
+    expect(() => validateRequest(track, { body })).toThrow("no zone")
+  })
+
   it("refuses a field the operation does not batch, from the catalog alone", () => {
     expect(refusal("attribute", { external_id: "u1" })).toContain("attributes")
   })

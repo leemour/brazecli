@@ -63,6 +63,10 @@ export const buildProgram = (options: ProgramOptions = {}): Command => {
     .option("--runs-dir <path>", "where run artifacts are written")
     .option("--timeout <ms>", "per-attempt timeout in milliseconds", Number)
     .option("--retries <n>", "attempts after the first", Number)
+    .option(
+      "--timezone <zone>",
+      "IANA zone for typed times without a zone and for times shown; default this computer's",
+    )
     .showHelpAfterError()
     .addHelpText("after", () => helpFooter(options))
 

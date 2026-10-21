@@ -1,9 +1,9 @@
 import { annotate } from "@leemour/cli-core/commands"
-import { catalog, type Operation } from "brazecli-core"
+import { catalog, type Operation, resolveTimeQuery } from "brazecli-core"
 import { Command } from "commander"
 import { collectQuery, type ExecutionContext, runOperation } from "../execute.js"
 import { readInput } from "../input/read.js"
-import type { GlobalFlags } from "../settings.js"
+import { type GlobalFlags, resolveTimeZone } from "../settings.js"
 
 /**
  * Every catalog operation, registered as a command. §13: a loop, not a hundred nearly identical
@@ -80,15 +80,20 @@ const build = (operation: Operation, context: ExecutionContext): Command => {
   }
 
   command.action(async (flags: Record<string, unknown>, self: Command) => {
+    const globals = globalsOf(self)
+    // Only the named flags: `--query` and `braze api` stay the raw way to send exactly what was typed.
+    const times = resolveTimeQuery(named(operation, flags), resolveTimeZone(globals))
+
     await runOperation(
       {
         operation,
         pathParams: collect(operation.pathParameters ?? [], flags),
-        query: { ...named(operation, flags), ...((flags.query as Record<string, string>) ?? {}) },
+        query: { ...times.query, ...((flags.query as Record<string, string>) ?? {}) },
         body: typeof flags.input === "string" ? readInput(flags.input) : undefined,
         label: operation.command.join(" "),
+        ...(times.conversions.length > 0 ? { times } : {}),
       },
-      globalsOf(self),
+      globals,
       context,
     )
   })

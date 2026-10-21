@@ -68,9 +68,12 @@ describe("commands generated from the catalog", () => {
   it("passes a documented query parameter under the name Braze uses, brackets and all", async () => {
     const mock = mockBraze(brazeResponses.ok({ campaigns: [] }))
 
-    await braze(["campaigns", "list", "--last-edit-time-gt", "2020-06-28", "--page", "2", "--json"], mock)
+    await braze(
+      ["campaigns", "list", "--last-edit-time-gt", "2020-06-28", "--page", "2", "--timezone", "UTC", "--json"],
+      mock,
+    )
 
-    expect(mock.requests[0]?.url).toContain("last_edit.time%5Bgt%5D=2020-06-28")
+    expect(mock.requests[0]?.url).toContain("last_edit.time%5Bgt%5D=2020-06-28T00%3A00%3A00Z")
     expect(mock.requests[0]?.url).toContain("page=2")
   })
 

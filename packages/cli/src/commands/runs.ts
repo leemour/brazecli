@@ -1,9 +1,10 @@
 import type { Streams } from "@leemour/cli-core"
-import { BrazeError } from "brazecli-core"
+import { BrazeError, formatInZone } from "brazecli-core"
 import { Command } from "commander"
 import { resolvePaths } from "../config/paths.js"
 import { outputFor } from "../output/context.js"
 import { expiredRuns, findRun, listRuns, removeRun } from "../runs/run.js"
+import { resolveTimeZone } from "../settings.js"
 
 export interface RunsContext {
   env?: NodeJS.ProcessEnv
@@ -20,10 +21,22 @@ export const runsCommand = (context: RunsContext = {}): Command => {
 
   const setup = (parent: Command) => {
     // A broken config must not stop someone reading the logs that would explain it.
-    const { env, globals, streams, renderer } = outputFor(parent, context)
+    const { env, globals, format, streams, renderer } = outputFor(parent, context)
     const paths = resolvePaths(env)
     if (globals.runsDir) paths.runs = globals.runsDir
-    return { paths, streams, renderer }
+
+    // A person reads pretty output, so it gets their wall clock with the zone named; JSON keeps UTC.
+    const zone = format === "pretty" ? resolveTimeZone(globals) : undefined
+    const shown = <T extends Record<string, unknown>>(row: T): T => {
+      if (zone === undefined) return row
+      const out: Record<string, unknown> = { ...row }
+      for (const key of ["startedAt", "completedAt"]) {
+        const value = out[key]
+        if (typeof value === "string") out[key] = `${formatInZone(value, zone)} ${zone}`
+      }
+      return out as T
+    }
+    return { paths, streams, renderer, shown }
   }
 
   command
@@ -31,18 +44,20 @@ export const runsCommand = (context: RunsContext = {}): Command => {
     .option("--limit <n>", "how many to show, newest first", Number, 20)
     .description("list past runs, newest first")
     .action(function (this: Command, flags: { limit: number }) {
-      const { paths, renderer } = setup(this)
+      const { paths, renderer, shown } = setup(this)
       const runs = listRuns(paths.runs).slice(0, flags.limit)
 
       renderer.result(
-        runs.map((run) => ({
-          runId: run.runId,
-          command: run.command,
-          profile: run.profile,
-          status: run.status,
-          startedAt: run.startedAt,
-          durationMs: run.durationMs ?? null,
-        })),
+        runs.map((run) =>
+          shown({
+            runId: run.runId,
+            command: run.command,
+            profile: run.profile,
+            status: run.status,
+            startedAt: run.startedAt,
+            durationMs: run.durationMs ?? null,
+          }),
+        ),
       )
     })
 
@@ -51,11 +66,11 @@ export const runsCommand = (context: RunsContext = {}): Command => {
     .argument("<run-id>", "id from `braze runs list`")
     .description("everything recorded about one run")
     .action(function (this: Command, id: string) {
-      const { paths, renderer } = setup(this)
+      const { paths, renderer, shown } = setup(this)
       const found = findRun(paths.runs, id)
       if (!found) throw new BrazeError("not_found", `no run named "${id}" under ${paths.runs}`)
 
-      renderer.result({ ...found.metadata, directory: found.dir })
+      renderer.result(shown({ ...found.metadata, directory: found.dir }))
     })
 
   command
@@ -84,7 +99,7 @@ export const runsCommand = (context: RunsContext = {}): Command => {
     .option("--confirm", "actually remove them", false)
     .description("remove old run directories — opt-in, never automatic")
     .action(function (this: Command, flags: { olderThan: number; dryRun: boolean; confirm: boolean }) {
-      const { paths, renderer } = setup(this)
+      const { paths, renderer, shown } = setup(this)
 
       if (!Number.isFinite(flags.olderThan) || flags.olderThan < 1) {
         throw new BrazeError("validation_error", "--older-than takes a whole number of days, 1 or more")
@@ -93,12 +108,14 @@ export const runsCommand = (context: RunsContext = {}): Command => {
       const before = new Date(Date.now() - flags.olderThan * 86_400_000)
       const expired = expiredRuns(paths.runs, before)
       const bytes = expired.reduce((total, run) => total + run.bytes, 0)
-      const runs = expired.map((run) => ({
-        runId: run.metadata.runId,
-        command: run.metadata.command,
-        startedAt: run.metadata.startedAt,
-        bytes: run.bytes,
-      }))
+      const runs = expired.map((run) =>
+        shown({
+          runId: run.metadata.runId,
+          command: run.metadata.command,
+          startedAt: run.metadata.startedAt,
+          bytes: run.bytes,
+        }),
+      )
 
       if (flags.dryRun) {
         renderer.result({ dryRun: true, olderThanDays: flags.olderThan, runs, count: runs.length, bytes })

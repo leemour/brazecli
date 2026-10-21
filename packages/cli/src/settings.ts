@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import type { KeyringStore, RenderFormat } from "@leemour/cli-core"
-import { BrazeError } from "brazecli-core"
+import { BrazeError, checkTimeZone } from "brazecli-core"
 import { type CredentialSource, Credentials } from "./auth/credentials.js"
 import { type Config, loadConfig, type OutputFormat } from "./config/file.js"
 import { type Paths, resolvePaths } from "./config/paths.js"
@@ -25,6 +25,7 @@ export interface GlobalFlags {
   recordsField?: string
   recordId?: string
   concurrency?: number
+  timezone?: string
 }
 
 export interface Settings {
@@ -198,3 +199,7 @@ export const resolveColor = (flags: GlobalFlags, env: NodeJS.ProcessEnv, config:
 
   return isTty
 }
+
+/** `--timezone`, else this computer's IANA zone — read on every call, so a changed `TZ` is seen. */
+export const resolveTimeZone = (flags: GlobalFlags): string =>
+  checkTimeZone(flags.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone)

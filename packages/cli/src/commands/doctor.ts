@@ -1,7 +1,9 @@
 import { type KeyringStore, visibleControls } from "@leemour/cli-core"
+import { formatInZone } from "brazecli-core"
 import { Command } from "commander"
 import { type Diagnosis, diagnose } from "../diagnose.js"
 import { type OutputContext, outputFor } from "../output/context.js"
+import { resolveTimeZone } from "../settings.js"
 import type { UpdateEnvironment } from "../update.js"
 
 export interface DoctorContext extends OutputContext {
@@ -14,15 +16,18 @@ export const doctorCommand = (context: DoctorContext = {}): Command =>
   new Command("doctor")
     .description("check this machine's setup: config, keys, keyring, runs and version — reaches nothing")
     .action(function (this: Command) {
-      const { env, format, renderer, streams } = outputFor(this, context)
+      const { env, format, globals, renderer, streams } = outputFor(this, context)
       const report = diagnose({ env, keyring: context.keyring, update: context.update })
-      if (format === "pretty") streams.data(visibleControls(readable(report)))
+      if (format === "pretty") streams.data(visibleControls(readable(report, resolveTimeZone(globals))))
       else renderer.result(report)
     })
 
-const readable = (report: Diagnosis): string => {
+const readable = (report: Diagnosis, zone: string): string => {
   const { update, config, keyring, environment, profiles, runs, next } = report
-  const seen = update.latest ? `npm had ${update.latest} on ${update.lastCheckedAt?.slice(0, 10)}` : "npm not asked yet"
+  const checked = update.lastCheckedAt
+    ? `${formatInZone(update.lastCheckedAt, zone).slice(0, 16)} ${zone}`
+    : "an unknown time"
+  const seen = update.latest ? `npm had ${update.latest} at ${checked}` : "npm not asked yet"
   const set = Object.entries(environment)
     .filter(([, value]) => value)
     .map(([name, value]) => (value === true ? `${name} set` : `${name}=${value}`))

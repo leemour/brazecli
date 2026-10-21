@@ -34,6 +34,7 @@ never reach Braze — `profile`, `runs`, `commands`, `schema`, `skill`, `update`
 | `--runs-dir <path>` | no | where run artifacts are written |
 | `--timeout <ms>` | no | per-attempt timeout in milliseconds |
 | `--retries <n>` | no | attempts after the first |
+| `--timezone <zone>` | no | IANA zone for typed times without a zone and for times shown; default this computer's |
 
 ## Written by hand
 
@@ -329,8 +330,8 @@ Operation `email.hard-bounces.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--start-date <value>` | no | first day of the range, as YYYY-MM-DD. Must be earlier than --end-date (e.g. 2019-01-01) |
-| `--end-date <value>` | no | last day of the range, as YYYY-MM-DD (e.g. 2019-02-01) |
+| `--start-date <value>` | no | first day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC. Must be earlier than --end-date (e.g. 2019-01-01) |
+| `--end-date <value>` | no | last day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC (e.g. 2019-02-01) |
 | `--limit <value>` | no | how many results to return. Defaults to 100; the cap differs by endpoint — 500 for email lists, 1000 for Content Blocks (e.g. 100) |
 | `--offset <value>` | no | how many results to skip before returning the rest (e.g. 1) |
 | `--email <value>` | no | an email address. Where it is a filter, Braze answers for that address and ignores the date range (e.g. example@braze.com) |
@@ -344,8 +345,8 @@ Operation `email.unsubscribes.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--start-date <value>` | no | first day of the range, as YYYY-MM-DD. Must be earlier than --end-date (e.g. 2020-01-01) |
-| `--end-date <value>` | no | last day of the range, as YYYY-MM-DD (e.g. 2020-02-01) |
+| `--start-date <value>` | no | first day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC. Must be earlier than --end-date (e.g. 2020-01-01) |
+| `--end-date <value>` | no | last day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC (e.g. 2020-02-01) |
 | `--limit <value>` | no | how many results to return. Defaults to 100; the cap differs by endpoint — 500 for email lists, 1000 for Content Blocks (e.g. 1) |
 | `--offset <value>` | no | how many results to skip before returning the rest (e.g. 1) |
 | `--sort-direction <value>` | no | desc for newest first, asc for oldest first. Defaults to oldest first (e.g. desc) |
@@ -417,7 +418,7 @@ Operation `campaigns.data-series.get`.
 |---|---|---|
 | `--campaign-id <value>` | no | campaign API identifier |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 7) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2020-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2020-06-28T23:59:59-5:00) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
 ### `braze <profile> campaigns details`
@@ -442,7 +443,7 @@ Operation `campaigns.list.get`.
 | `--page <value>` | no | which page to return, counting from 0. A page holds up to 100 (e.g. 0) |
 | `--include-archived <value>` | no | include archived items. Defaults to false (e.g. false) |
 | `--sort-direction <value>` | no | desc for newest first, asc for oldest first. Defaults to oldest first (e.g. desc) |
-| `--last-edit-time-gt <value>` | no | only items edited after this time, as yyyy-MM-DDTHH:mm:ss (e.g. 2020-06-28T23:59:59-5:00) |
+| `--last-edit-time-gt <value>` | no | only items edited after this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the start of that local day (e.g. 2020-06-28T23:59:59-5:00) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
 ### `braze <profile> campaigns trigger schedule delete`
@@ -500,7 +501,7 @@ Operation `sends.data-series.get`.
 | `--campaign-id <value>` | no | campaign API identifier |
 | `--send-id <value>` | no | send API identifier, set when the message was sent |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 30) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2014-12-10T23:59:59-05:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2014-12-10T23:59:59-05:00) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
 ### `braze <profile> sends id create`
@@ -523,8 +524,8 @@ Operation `canvas.data-series.get`.
 | Option | Required | |
 |---|---|---|
 | `--canvas-id <value>` | no | Canvas API identifier |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-05-30T23:59:59-5:00) |
-| `--starting-at <value>` | no | date the series begins on, ISO-8601. An alternative to --length, not a companion to it (e.g. 2018-05-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-05-30T23:59:59-5:00) |
+| `--starting-at <value>` | no | when the series begins, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the start of that local day. An alternative to --length, not a companion to it (e.g. 2018-05-28T23:59:59-5:00) |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 10) |
 | `--include-variant-breakdown <value>` | no | also return per-variant statistics. Defaults to false (e.g. true) |
 | `--include-step-breakdown <value>` | no | also return per-step statistics. Defaults to false (e.g. true) |
@@ -540,8 +541,8 @@ Operation `canvas.data-summary.get`.
 | Option | Required | |
 |---|---|---|
 | `--canvas-id <value>` | no | Canvas API identifier |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-05-30T23:59:59-5:00) |
-| `--starting-at <value>` | no | date the series begins on, ISO-8601. An alternative to --length, not a companion to it (e.g. 2018-05-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-05-30T23:59:59-5:00) |
+| `--starting-at <value>` | no | when the series begins, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the start of that local day. An alternative to --length, not a companion to it (e.g. 2018-05-28T23:59:59-5:00) |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 5) |
 | `--include-variant-breakdown <value>` | no | also return per-variant statistics. Defaults to false (e.g. true) |
 | `--include-step-breakdown <value>` | no | also return per-step statistics. Defaults to false (e.g. true) |
@@ -570,7 +571,7 @@ Operation `canvas.list.get`.
 | `--page <value>` | no | which page to return, counting from 0. A page holds up to 100 (e.g. 1) |
 | `--include-archived <value>` | no | include archived items. Defaults to false (e.g. false) |
 | `--sort-direction <value>` | no | desc for newest first, asc for oldest first. Defaults to oldest first (e.g. desc) |
-| `--last-edit-time-gt <value>` | no | only items edited after this time, as yyyy-MM-DDTHH:mm:ss (e.g. 2020-06-28T23:59:59-5:00) |
+| `--last-edit-time-gt <value>` | no | only items edited after this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the start of that local day (e.g. 2020-06-28T23:59:59-5:00) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
 ### `braze <profile> canvas trigger schedule delete`
@@ -639,7 +640,7 @@ Operation `events.data-series.get`.
 | `--event <value>` | no | name of the custom event to return analytics for (e.g. event_name) |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 24) |
 | `--unit <value>` | no | time between data points: day or hour. Defaults to day (e.g. hour) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2014-12-10T23:59:59-05:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2014-12-10T23:59:59-05:00) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
 | `--segment-id <value>` | no | segment API identifier, to limit the analytics to one analytics-enabled segment |
 | `--query <key=value>` | no | any other query parameter, repeatable |
@@ -653,7 +654,7 @@ Operation `kpi.new-users.data-series.get`.
 | Option | Required | |
 |---|---|---|
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 14) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
@@ -666,7 +667,7 @@ Operation `kpi.dau.data-series.get`.
 | Option | Required | |
 |---|---|---|
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 10) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
@@ -679,7 +680,7 @@ Operation `kpi.mau.data-series.get`.
 | Option | Required | |
 |---|---|---|
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 7) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-05:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-05:00) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
@@ -692,7 +693,7 @@ Operation `kpi.uninstalls.data-series.get`.
 | Option | Required | |
 |---|---|---|
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 14) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
@@ -707,7 +708,7 @@ Operation `feed.data-series.get`.
 | `--card-id <value>` | no | news feed card API identifier |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 14) |
 | `--unit <value>` | no | time between data points: day or hour. Defaults to day (e.g. day) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
 ### `braze <profile> feed details`
@@ -753,7 +754,7 @@ Operation `purchases.quantity-series.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 100) |
 | `--unit <value>` | no | time between data points: day or hour. Defaults to day (e.g. 14) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
@@ -768,7 +769,7 @@ Operation `purchases.revenue-series.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 100) |
 | `--unit <value>` | no | time between data points: day or hour. Defaults to day (e.g. 14) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
@@ -797,7 +798,7 @@ Operation `segments.data-series.get`.
 |---|---|---|
 | `--segment-id <value>` | no | segment API identifier, to limit the analytics to one analytics-enabled segment |
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 14) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-27T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-27T23:59:59-5:00) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
 ### `braze <profile> segments details`
@@ -821,7 +822,7 @@ Operation `sessions.data-series.get`.
 |---|---|---|
 | `--length <value>` | no | how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. The cap differs by endpoint: 100 for most, 14 for Canvas (e.g. 14) |
 | `--unit <value>` | no | time between data points: day or hour. Defaults to day (e.g. day) |
-| `--ending-at <value>` | no | date the series ends on, ISO-8601. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
+| `--ending-at <value>` | no | when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day. Defaults to the time of the request (e.g. 2018-06-28T23:59:59-5:00) |
 | `--app-id <value>` | no | app API identifier, to limit the analytics to one app |
 | `--segment-id <value>` | no | segment API identifier, to limit the analytics to one analytics-enabled segment |
 | `--query <key=value>` | no | any other query parameter, repeatable |
@@ -966,7 +967,7 @@ Operation `messages.scheduled-broadcasts.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--end-time <value>` | no | end of the time range, ISO-8601 (e.g. 2018-09-01T00:00:00-04:00) |
+| `--end-time <value>` | no | end of the time range, ISO-8601. A time without a zone is read in --timezone and sent as UTC; a date alone is a UTC day: Braze reads it as midnight UTC (e.g. 2018-09-01T00:00:00-04:00) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
 
 ### `braze <profile> messages schedule delete`
@@ -1148,8 +1149,8 @@ Operation `sms.invalid-phone-numbers.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--start-date <value>` | no | first day of the range, as YYYY-MM-DD. Must be earlier than --end-date (e.g. 2018-09-01) |
-| `--end-date <value>` | no | last day of the range, as YYYY-MM-DD (e.g. 2018-09-01) |
+| `--start-date <value>` | no | first day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC. Must be earlier than --end-date (e.g. 2018-09-01) |
+| `--end-date <value>` | no | last day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC (e.g. 2018-09-01) |
 | `--limit <value>` | no | how many results to return. Defaults to 100; the cap differs by endpoint — 500 for email lists, 1000 for Content Blocks (e.g. 100) |
 | `--offset <value>` | no | how many results to skip before returning the rest (e.g. 1) |
 | `--phone-numbers <value>` | no | a phone number in E.164 form, such as 12345678901 (e.g. 12345678901) |
@@ -1224,8 +1225,8 @@ Operation `content-blocks.list.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--modified-after <value>` | no | only items updated at or after this time, ISO-8601 (e.g. 2020-01-01T01:01:01.000000) |
-| `--modified-before <value>` | no | only items updated at or before this time, ISO-8601 (e.g. 2020-02-01T01:01:01.000000) |
+| `--modified-after <value>` | no | only items updated at or after this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the start of that local day (e.g. 2020-01-01T01:01:01.000000) |
+| `--modified-before <value>` | no | only items updated at or before this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day (e.g. 2020-02-01T01:01:01.000000) |
 | `--limit <value>` | no | how many results to return. Defaults to 100; the cap differs by endpoint — 500 for email lists, 1000 for Content Blocks (e.g. 100) |
 | `--offset <value>` | no | how many results to skip before returning the rest (e.g. 1) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
@@ -1272,8 +1273,8 @@ Operation `templates.email.list.get`.
 
 | Option | Required | |
 |---|---|---|
-| `--modified-after <value>` | no | only items updated at or after this time, ISO-8601 (e.g. 2020-01-01T01:01:01.000000) |
-| `--modified-before <value>` | no | only items updated at or before this time, ISO-8601 (e.g. 2020-02-01T01:01:01.000000) |
+| `--modified-after <value>` | no | only items updated at or after this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the start of that local day (e.g. 2020-01-01T01:01:01.000000) |
+| `--modified-before <value>` | no | only items updated at or before this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means the end of that local day (e.g. 2020-02-01T01:01:01.000000) |
 | `--limit <value>` | no | how many results to return. Defaults to 100; the cap differs by endpoint — 500 for email lists, 1000 for Content Blocks (e.g. 1) |
 | `--offset <value>` | no | how many results to skip before returning the rest (e.g. 0) |
 | `--query <key=value>` | no | any other query parameter, repeatable |
