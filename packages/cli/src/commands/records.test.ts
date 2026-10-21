@@ -182,6 +182,20 @@ describe("the summary is the result", () => {
     expect(summary.submitted).toBe(3)
   })
 
+  it("audits an event whose time has no zone as invalid and sends the rest", async () => {
+    const mock = mockBraze(() => brazeResponses.created())
+    const path = users(3, (row) => ({
+      name: "rented_movie",
+      time: row === 2 ? "2026-09-15T10:00:00" : "2026-09-15T10:00:00Z",
+    }))
+
+    await braze(["users", "track", "--records", path, "--records-field", "events", "--confirm", "--json"], mock)
+
+    const summary = JSON.parse(streams.stdout.join("\n"))
+    expect(summary).toMatchObject({ invalid: 1, submitted: 2 })
+    expect(lastRun().records).toContain("no zone")
+  })
+
   /** One tally feeds both, so they cannot drift apart and leave nobody able to trust either. */
   it("never disagrees with run.json", async () => {
     const mock = mockBraze(() => brazeResponses.created())

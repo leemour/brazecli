@@ -99,6 +99,20 @@ describe("braze doctor", () => {
     expect(report.next.join("\n")).toContain("braze update")
   })
 
+  it("shows when npm was last asked in the zone in use, and names it", async () => {
+    const env = setup()
+    mkdirSync(env.BRAZE_STATE_DIR as string, { recursive: true })
+    writeFileSync(
+      join(env.BRAZE_STATE_DIR as string, "update-check.json"),
+      JSON.stringify({ checkedAt: Date.parse("2026-09-24T10:00:00Z"), latest: "99.0.0" }),
+    )
+    const streams = captureStreams()
+
+    await run(["doctor", "--timezone", "Europe/Madrid"], { env, streams, keyring: memoryKeyring(), isTty: true })
+
+    expect(streams.stdout.join("\n")).toContain("npm had 99.0.0 at 2026-09-24 12:00 Europe/Madrid")
+  })
+
   it("gives a person lines to read rather than JSON", async () => {
     const streams = captureStreams()
     const code = await run(["doctor"], { env: setup(), streams, keyring: memoryKeyring(), isTty: true })

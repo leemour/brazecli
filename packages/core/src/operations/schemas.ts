@@ -16,6 +16,8 @@ import { isZoneless } from "../zone.js"
  * operation stays `generated` and this file says why — a smaller strict set that is right beats a
  * fuller one that guesses.
  *
+ * One rule is ours, not Braze's: an event or purchase `time` must carry its zone (see `zoned`).
+ *
  * What is deliberately NOT here, and why:
  *
  * - `messages.send.create` — the identifier rules interact with audience, segment and recipient
