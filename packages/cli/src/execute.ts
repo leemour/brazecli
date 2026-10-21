@@ -1,5 +1,12 @@
 import { createRenderer, type FileLogger, processStreams, type Renderer, type Streams } from "@leemour/cli-core"
-import { BrazeClient, BrazeError, type Operation, resolvePath, validateRequest } from "brazecli-core"
+import {
+  BrazeClient,
+  BrazeError,
+  type Operation,
+  type ResolvedTimes,
+  resolvePath,
+  validateRequest,
+} from "brazecli-core"
 import { runBulk } from "./bulk.js"
 import { assertWriteAllowed } from "./guards.js"
 import { resolveRecordsFormat } from "./input/records.js"
@@ -21,6 +28,8 @@ export interface OperationRequest {
   body?: unknown
   /** What `runs list` shows, e.g. `api GET /campaigns/list` or `campaigns list`. */
   label: string
+  /** Set when a typed time was read in a zone, so the answer can say which and what was sent. */
+  times?: ResolvedTimes
 }
 
 /**
@@ -79,6 +88,17 @@ export const runOperation = async (
   // From here until `finish`, a signal finalizes this run instead of killing the process mid-write.
   const untrack = trackRun(run)
 
+  if (request.times) {
+    const { timeZone, conversions } = request.times
+    run.logger.info({ event: "times_resolved", timeZone, conversions })
+    renderer.note(
+      `times read in ${timeZone} · ` +
+        conversions
+          .map(({ parameter, given, sent, means }) => `${parameter} ${given} → ${sent} (${means})`)
+          .join(" · "),
+    )
+  }
+
   try {
     if (bulk) {
       await runBulk({
@@ -111,6 +131,7 @@ export const runOperation = async (
         query,
         access: operation.access,
         bodyBytes: body === undefined ? 0 : JSON.stringify(body).length,
+        ...(request.times ? { timezone: request.times.timeZone, times: request.times.conversions } : {}),
       }
       run.logger.info({ event: "dry_run", ...plan })
       renderer.result(plan)

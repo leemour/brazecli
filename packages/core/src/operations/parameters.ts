@@ -22,8 +22,12 @@ export const parameterDescriptions: Readonly<Record<string, string>> = {
   length:
     "how many units before ending_at the series covers — days, or hours where the endpoint takes --unit. " +
     "The cap differs by endpoint: 100 for most, 14 for Canvas",
-  ending_at: "date the series ends on, ISO-8601. Defaults to the time of the request",
-  starting_at: "date the series begins on, ISO-8601. An alternative to --length, not a companion to it",
+  ending_at:
+    "when the series ends, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means " +
+    "the end of that local day. Defaults to the time of the request",
+  starting_at:
+    "when the series begins, ISO-8601. Without a zone it is read in --timezone and sent as UTC; a date alone means " +
+    "the start of that local day. An alternative to --length, not a companion to it",
   unit: "time between data points: day or hour. Defaults to day",
   app_id: "app API identifier, to limit the analytics to one app",
   segment_id: "segment API identifier, to limit the analytics to one analytics-enabled segment",
@@ -44,12 +48,21 @@ export const parameterDescriptions: Readonly<Record<string, string>> = {
   offset: "how many results to skip before returning the rest",
   include_archived: "include archived items. Defaults to false",
   sort_direction: "desc for newest first, asc for oldest first. Defaults to oldest first",
-  "last_edit.time[gt]": "only items edited after this time, as yyyy-MM-DDTHH:mm:ss",
-  modified_after: "only items updated at or after this time, ISO-8601",
-  modified_before: "only items updated at or before this time, ISO-8601",
-  start_date: "first day of the range, as YYYY-MM-DD. Must be earlier than --end-date",
-  end_date: "last day of the range, as YYYY-MM-DD",
-  end_time: "end of the time range, ISO-8601",
+  "last_edit.time[gt]":
+    "only items edited after this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; " +
+    "a date alone means the start of that local day",
+  modified_after:
+    "only items updated at or after this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; " +
+    "a date alone means the start of that local day",
+  modified_before:
+    "only items updated at or before this time, ISO-8601. Without a zone it is read in --timezone and sent as UTC; " +
+    "a date alone means the end of that local day",
+  start_date:
+    "first day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC. Must be earlier than --end-date",
+  end_date: "last day of the range, as YYYY-MM-DD — a UTC day: Braze reads it as midnight UTC",
+  end_time:
+    "end of the time range, ISO-8601. A time without a zone is read in --timezone and sent as UTC; " +
+    "a date alone is a UTC day: Braze reads it as midnight UTC",
 
   // Identifying a person.
   email: "an email address. Where it is a filter, Braze answers for that address and ignores the date range",
@@ -73,4 +86,32 @@ export const parameterDescriptions: Readonly<Record<string, string>> = {
   subscription_group_id: "subscription group API identifier",
   filter: 'a SCIM filter expression, such as userName eq "someone@example.com"',
   reason: "why the number was marked invalid, such as provider_error",
+}
+
+/**
+ * How a zone-less value of each time parameter is read. `time` says whether a wall-clock time is
+ * converted to UTC; `date` says what a date alone means.
+ *
+ * The datetime parameters are documented as ISO-8601 with no zone stated, so a zone-less value is
+ * read in whatever zone Braze assumes. Sending UTC removes the guess:
+ * https://www.braze.com/docs/api/endpoints/export/campaigns/get_campaign_analytics (ending_at),
+ * https://www.braze.com/docs/api/endpoints/export/canvas/get_canvas_analytics (starting_at),
+ * https://www.braze.com/docs/api/endpoints/export/campaigns/get_campaigns (last_edit.time[gt]),
+ * https://www.braze.com/docs/api/endpoints/templates/email_templates/get_list_email_templates (modified_*).
+ *
+ * `utc-day` is the provider exception: Braze takes only a date and documents it as "treated as
+ * midnight in UTC time by the API", so the date goes unchanged and the answer names it a UTC day:
+ * https://www.braze.com/docs/api/endpoints/email/get_list_hard_bounces,
+ * https://www.braze.com/docs/api/endpoints/sms/get_query_invalid_numbers,
+ * https://www.braze.com/docs/api/endpoints/messaging/schedule_messages/get_messages_scheduled (end_time).
+ */
+export const timeParameters: Readonly<Record<string, { time: boolean; date: "start" | "end" | "utc-day" }>> = {
+  starting_at: { time: true, date: "start" },
+  ending_at: { time: true, date: "end" },
+  "last_edit.time[gt]": { time: true, date: "start" },
+  modified_after: { time: true, date: "start" },
+  modified_before: { time: true, date: "end" },
+  end_time: { time: true, date: "utc-day" },
+  start_date: { time: false, date: "utc-day" },
+  end_date: { time: false, date: "utc-day" },
 }

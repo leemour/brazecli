@@ -42,7 +42,10 @@ jobs:
       # the typecheck deliberately emits no JavaScript — it used to overwrite the bundled entry
       # point with its own (`BUG-16`).
       - run: pnpm build
+      # A zone far from UTC, so a time read in the runner's zone instead of an explicit one fails here.
       - run: pnpm test
+        env:
+          TZ: Asia/Vladivostok
 
       # Reads the committed snapshot, never the network, so it gates every PR without making CI
       # depend on Postman's uptime. Fails when the catalog no longer matches the spec it claims

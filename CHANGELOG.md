@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 follow [semantic versioning](https://semver.org/spec/v2.0.0.html) — with `0.x` meaning the command
 surface may still move between minor versions.
 
+## Unreleased
+
+### Added
+
+- **`--timezone <zone>`** names the IANA zone for typed times without one and for times shown to a
+  person. Without it, this computer's zone is used.
+
+### Fixed
+
+- **A time typed without a zone is now sent to Braze as UTC.** `--ending-at`, `--starting-at`,
+  `--modified-after`, `--modified-before`, `--last-edit-time-gt` and `--end-time` used to go out as
+  typed, so Braze read them in a zone of its own choosing. A date alone on these flags means the
+  start or the end of that local day. A note on stderr, and `timezone`/`times` in a `--dry-run`
+  plan, say which zone was used and what was sent. `--query` and `braze api` still send exactly
+  what was typed.
+- `--start-date`, `--end-date` and a date-only `--end-time` are sent unchanged, because Braze reads
+  them as midnight UTC; the help and the note now say they are UTC days.
+- **An event or purchase `time` without a zone is refused**, in `--records` files and `--input`
+  bodies, instead of being sent for Braze to guess at. Add `Z` or an offset such as `+02:00`.
+- `runs list`, `runs show`, `runs cleanup` and `doctor` show times in the zone in use, with its
+  name, in pretty output. JSON output stays UTC.
+
 ## 0.4.0 — 2026-09-24
 
 ### Added

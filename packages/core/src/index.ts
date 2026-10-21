@@ -42,7 +42,7 @@ export {
   findOperation,
 } from "./operations/index.js"
 export type { OperationOverride } from "./operations/overrides.js"
-export { parameterDescriptions } from "./operations/parameters.js"
+export { parameterDescriptions, timeParameters } from "./operations/parameters.js"
 export { recordSchemas, schemas } from "./operations/schemas.js"
 export {
   buildQuery,
@@ -74,3 +74,13 @@ export {
   wallClock,
 } from "./time.js"
 export { checkRecord, type ValidatableInput, validateRequest } from "./validate.js"
+export {
+  checkTimeZone,
+  formatInZone,
+  isZoneless,
+  type ResolvedTimes,
+  resolveTimeQuery,
+  type TimeConversion,
+  utcString,
+  zonedToUtc,
+} from "./zone.js"
